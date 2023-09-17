@@ -1,24 +1,32 @@
-# Modèles de données daen-scout
+# daen Platform Data Models
 
-L'application daen-scout repose sur des environnements de stockage et d'exécution de traitements dans le cloud. A date c'est la solution Firebase de Google qui est utilisée mais potentiellement n'importe quel environnement NoSQL (pour pouvoir héberger nos données) pourrait convenir.
+## Overview
 
-Les données sont stockées dans deux types de bases de données différentes :
+daen Platform Data Models are mainly inspired by underlying NoSQL data storage components. Hence the platform manages two storage assets:
 
-- une base de données NOSQL 'temps réel' (firebase realtime database => **rtdb**) pour la gestion des interactions avec les utilisateurs
-- une base de données NOSQL 'orientée documents' (firestore => **fs**) pour le stockage des données persistantes liées aux Points d'Intérêts
+- **rtdb**: Firebase realtime database. A NoSQL, `JSON` storage on Google Cloud Platform. Each node of the JSON tree is requestable, search is limited to shallow parameters match requests, database best used for frequent read with low sized payload.
+- **fs**: Firestore is a JSON documents collections database. Here documents are organised in _collections_, i.e. set of `JSON` documents. Search are done at collection (or subcollection) level based on index built upon document paramaters. Write capabilities are limited with a maximum of 5 write requests/s on a document as this database is optimised for document retrieval rather than manipulation.
 
-L'intéret de ce double stockage est de pouvoir profiter du meilleur des deux mondes tout en minimisant les couts opérationnels. Toutes les données auraient pu être stockées dans la même base de données mais, au prix d'un léger accroissement de la complexité de BUILD, ce double stockage s'avère plus performant en RUN :
+daen platform Data Model is designed to take the best profit of these two assets:
 
-- **rtdb** est un arbre `JSON` qui peut être requêté au niveau de chacun de ses noeuds et dont la tarification est liée au volume de données transférée. Cette structure favorise les requêtages fréquents de données de faible volumétrie (par exemple des retours utilisateurs)
-- **fs** est une collection de documents `JSON` qui sont requêtés soit par document soit par collection/sous-collection de documents et dont la tarification est liée au nombre de lecture/écriture. Cette stucture est donc optimisée pour le stockage de gros volumes peu (500 écritures/secondes ca reste très relatif comme peu 😉) sollicités.
+- **rtbd** is used to handle frequently changing and transitive information linked to platform activities
+- **fs** is dedicated to Business Objects storage
 
-Le modèle de données **`daen-scout`** tire partie de cette dualité pour optimiser les coûts et les performances de l'application.
+## Notation
 
-## Objets métier
+We use a URL like notation to define storage location and the type of stored data at this location.
 
-l'app **`daen-scout`** manipule différents type d'objets persistant en base. L'une des forces des bases NOSQL est leur capacité à stocker _tel quel_ des structures JSON / objets Javascript. Les types d'objets métiers gérés par firebase sont donc les mêmes que ceux utilisés par l'application, à savoir :
+```text
+<fs|rtbd>:(optional){collection<type>}/path/param
+```
 
-```JS
+## Objects meta types
+
+Since most of platform systems are `JSON` friendly, including the data storage, data structure will be presented in this format.
+
+### POI - `fs:{POIs}/`
+
+```JSON
 "POI": {
     "uid": <string>,
     "code": <string>,
@@ -33,37 +41,60 @@ l'app **`daen-scout`** manipule différents type d'objets persistant en base. L'
     "created_t": <number>,
     "creator_id": <string>,
     "creator_pseudo": <string>,
-    "status": "handled|disbelieved|locked|archived",
+    "status": <"handled"|"disbelieved"|"locked"|"archived">,
     "updated_t": <number>,
 }
+```
 
-"POIview": {
-    "uid": <string>,
-    "code": <string>,
-    "opacity": <number>,
-    "lat": <number>,
-    "lon": <number>,
-    "status": "handled|disbelieved|locked|archived",
-  }
+### Map tile content - `fs:{poi_tiles}/`
 
-"feedback": {
-  "at" : 1622556370380,
-  "type" : "PLUS|HANDLED|THUMBUP",
-  "owner" : "...",
-  "poi" : "...",
-  "pos" : [ 48.8350309, 2.3290567 ],
-  "status" : "new",
-}
-
-"buffer": {
-  "at" : 1623599131240,
-  "worker" : "...",
-  "options" : {
-    "opt1" : "..."
+```JSON
+"tile":{
+  "_clotho": <bool>,
+  "a": <integer>,
+  "id": <string>,
+  "poi_lists":{
+    <string:typeofPOI>:[<POIview>]
   },
-  "owner" : "...",
-  "status" : "new|running|complete|error|archived",
+  "updated_t": <integer>
 }
+
+<POIview>: {
+  "uid": <string>,
+  "code": <string>,
+  "opacity": <number>,
+  "lat": <number>,
+  "lon": <number>,
+  "status": <"handled"|"disbelieved"|"locked"|"archived">,
+}
+```
+
+### User feedback - `rtdb:/feedbacks/`
+
+```JSON
+"feedback": {
+"at" : 1622556370380,
+"type" : "PLUS|HANDLED|THUMBUP",
+"owner" : "...",
+"poi" : "...",
+"pos" : [ 48.8350309, 2.3290567 ],
+"status" : "new",
+}
+```
+
+### Action item - `rtdb:/(buffer|tasks)/`
+
+```JSON
+"action": {
+"at" : 1623599131240,
+"worker" : "...",
+"options" : {
+"opt1" : "..."
+},
+"owner" : "...",
+"status" : "new|running|complete|error|archived",
+}
+
 ```
 
 ## Modèle de stockage firebase realtime database
@@ -148,8 +179,11 @@ Cette base est organisée sous forme de collections de documents, chaque documen
     },
     "POIs" : {
       "poiUid" : {
-        <POI>,
-        "logs" : [{"at": <number>, "detail": <string>, "type": <string>, "who": <string>}]
+        ...<POI>,
+        "logs" : [{"at": <number>,
+          "detail": <string>,
+          "type": <string>,
+          "who": <string>}]
         },
     },
     "sequences" : {
