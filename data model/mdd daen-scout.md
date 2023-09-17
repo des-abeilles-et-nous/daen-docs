@@ -56,20 +56,28 @@ This storage is built as a collections of JSON documents or subcollection. Each 
 ```JSON
 {
   "__collections__": {
-    "poi_tile" : {
-      $tileid: <deprecated>
+    "tiles_view": {   //Collection of tiles with viewable POIs params
+      "$tileid": <tile>
     },
-    "POIs" : {
-      $poiUid: <POI>,
+    "POIs" : {        //Collection of active, i.e. not archived, POIs
+      "$poiUid": <POI>,
     },
-    "sequences" : {
-
+    "POIs_attic" : {  //Collection of archived POIs
+      "$poiUid": <POI>,
     },
-    "tile_ids" : {
-
+    "sequences" : {   //Last auto numbered value given for each value category
+      "$seq_name": {"count":<number>, "prefix":<string>},
     },
-    "users" : {
-
+    "poi_tile" : {    //Old tiled view tile model, kept for upward compatibility (deprecated)
+      "$tileid": <deprecated>
+    },
+    "tile_ids" : {    //(deprecated) workaround to keep track of tiles with viewable POIs
+      "$tileid": <deprecated>
+    },
+    "users": {
+      "$uuid":  "{
+        (to be described)
+      }",
     },
   }
 }
@@ -97,17 +105,18 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
     "creator_id": <string>,     //POI creator user unique id (uuid)
     "creator_pseudo": <string>, //creator pseudo (autoupdated from creator_id)
     "status": <"handled"|"disbelieved"|"locked"|"archived">, //visible status
-    "updated_t": <number>,      ///last update timestamp
+    "m_t": <number>,      //last modified timestamp
+    "views": [<string>],  //array of views POI appears in (autoupdated)
 }
 ```
 
 ### Map tile content - `fs:{tiled_views}/`
 
 ```JSON
-"tile":{
-  "_clotho": <bool>,
-  "a": <integer>,
-  "id": <string>,
+"<tile>":{
+  "_clotho": <bool>,    //(internal) true if next tile refresh task is scheduled
+  "a": <integer>,       //size in degree of arc of a square tile vertex
+  "id": <string>,       //tile unique id
   "poi_lists":{
     <string:category>:[<POIview>]
   },
@@ -118,7 +127,7 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 ### POI viewable attributes - `fs:{poi_tiles}/tiled_views/{category}[]`
 
 ```JSON
-<POIview>: {
+"<POIview>": {      //See <POI> for attributes explanation
   "uid": <string>,
   "code": <string>,
   "opacity": <number>,
@@ -131,7 +140,7 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 ### User feedback - `rtdb:/feedbacks/`
 
 ```JSON
-"feedback": {
+"<feedback>": {
   "at" : <number>,      //timestamp of feedback action
   "type" : "PLUS|HANDLED|NOTSEEN|THUMBUP",    //feedback type
   "owner" : <string>,   //feeback author uuid
@@ -144,10 +153,10 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 ### Action item - `rtdb:/(buffer|tasks)/`
 
 ```JSON
-"action": {
+"<action>": {
   "at" :  <number>,               //timestamp to schedule action launch, 0 is instant launch
   "worker" : <string:worker>,     //code name of the worker to launch
-  "options" : {<string:option>:*} //options object specific to worker
+  "options" : {<string:option>:*}, //options object specific to worker
   "owner" : <string>,             //action owner uuid,
   "status" : "new|running|complete|error|archived",   //action status according to platform scheduling
 }
