@@ -29,7 +29,7 @@ We use a URL like notation to define storage location and the type of stored dat
 ```JSON
 {
   "buffer" : {        //queue of worker to be launched instantaneously
-    $buffered_uuid: <action>
+    "$buffered_uuid": "<action>"
   },
   "tasks" : {         //queue of worker to be launched on schedule, scanned every minute
     $task_uuid : <action>
