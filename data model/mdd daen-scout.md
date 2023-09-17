@@ -20,171 +20,47 @@ We use a URL like notation to define storage location and the type of stored dat
 <fs|rtbd>:(optional){collection<type>}/path/param
 ```
 
-## Objects meta types
+## Object Storage Management systems
 
-Since most of platform systems are `JSON` friendly, including the data storage, data structure will be presented in this format.
+### Firebase realtime database - `rtdb:/`
 
-### POI - `fs:{POIs}/`
-
-```JSON
-"POI": {
-    "uid": <string>,
-    "code": <string>,
-    "opacity": <number>,
-    "lat": <number>,
-    "lon": <number>,
-    "alt": <number>,
-    "desc": <string>,
-    "plus": <number>,
-    "notseen": <number>,
-    "tup": <number>,
-    "created_t": <number>,
-    "creator_id": <string>,
-    "creator_pseudo": <string>,
-    "status": <"handled"|"disbelieved"|"locked"|"archived">,
-    "updated_t": <number>,
-}
-```
-
-### Map tile content - `fs:{poi_tiles}/`
-
-```JSON
-"tile":{
-  "_clotho": <bool>,
-  "a": <integer>,
-  "id": <string>,
-  "poi_lists":{
-    <string:typeofPOI>:[<POIview>]
-  },
-  "updated_t": <integer>
-}
-
-<POIview>: {
-  "uid": <string>,
-  "code": <string>,
-  "opacity": <number>,
-  "lat": <number>,
-  "lon": <number>,
-  "status": <"handled"|"disbelieved"|"locked"|"archived">,
-}
-```
-
-### User feedback - `rtdb:/feedbacks/`
-
-```JSON
-"feedback": {
-"at" : 1622556370380,
-"type" : "PLUS|HANDLED|THUMBUP",
-"owner" : "...",
-"poi" : "...",
-"pos" : [ 48.8350309, 2.3290567 ],
-"status" : "new",
-}
-```
-
-### Action item - `rtdb:/(buffer|tasks)/`
-
-```JSON
-"action": {
-"at" : 1623599131240,
-"worker" : "...",
-"options" : {
-"opt1" : "..."
-},
-"owner" : "...",
-"status" : "new|running|complete|error|archived",
-}
-
-```
-
-## Modèle de stockage firebase realtime database
-
-l'arbre de stockage est structuré comme suit :
+`rtdb` storage is one unique JSON tree which is organized as follow:
 
 ```JSON
 {
-  "buffer" : {
-    $buffered_uuid : {
-      "at" : 1623599131240,
-      "worker" : "...",
-      "options" : {
-        "opt1" : "..."
-      },
-      "owner" : "...",
-      "status" : "new|running|complete|error|archived",
-    }
+  "buffer" : {        //queue of worker to be launched instantaneously
+    $buffered_uuid: <action>
   },
-  "feedbacks" : {
-    $feedback_uuid : {
-      "at" : 1622556370380,
-      "type" : "PLUS|HANDLED|THUMBUP",
-      "owner" : "...",
-      "poi" : "...",
-      "pos" : [ 48.8350309, 2.3290567 ],
-      "status" : "new",
-    },
+  "tasks" : {         //queue of worker to be launched on schedule, scanned every minute
+    $task_uuid : <action>
   },
-  "logs" : {
+  "logs" : {          //queue execution residus for postmortem analysis or worker relaunch
     $status: {
-      $task_uuid : {
-      "at" : 1623162848446,
-      "status" : "new|running|complete|error|archived",
-      "worker" : "..."
-      },
+      $task_uuid : <action>
     }
   },
-  "subs" :{
-    $subs_uuid : {
-      "userid": "userId",
-      "feedid": "feedId",
-      "status": "new|notified|read|archived",
-      "at": 1623162848446,
-    }
+  "feedbacks" : {     //map of user feedbacks awaiting processing
+    $feedback_uuid: <feedback>
   },
-  "tasks" : {
-    $task_uuid : {
-      "at" : 1623261317191,
-      "status" : "new|running|complete|error|archived",
-      "worker" : "cleaner",
-      "options" : {
-        "opt1" : "..."
-      },
-    }
-  }
+  "subs" :{           //map of all users' subscriptions to event feeders
+    $subs_uuid : <subs>
+  },
 }
 
 ```
 
-(to be continued)
+## Firestore - `fs:{}`
 
-## Modèle de données firestore
-
-Cette base est organisée sous forme de collections de documents, chaque document étant un arbre JSON qui peut, outre ses propres champs, aussi inclure une ou plusieurs sous-collections de documents.
+This storage is built as a collections of JSON documents or subcollection. Each node of the collectionhierarchy is searchable and can be indexed to improved search capabilities and performances. We structures daen collections as follows:
 
 ```JSON
 {
   "__collections__": {
     "poi_tile" : {
-      "tileid" : {
-        "a" : 1,
-        "poi_lists" : {
-          "HORNET" : [{<POIview>}],
-          "BLOOMING" : [{<POIview>}],
-          "SWARM" : [{<POIview>}],
-          "NEST" : [{<POIview>}],
-        },
-        "updated_t": 1623599131929,
-        "_clotho" : true | false
-      },
+      $tileid: <deprecated>
     },
     "POIs" : {
-      "poiUid" : {
-        ...<POI>,
-        "logs" : [{"at": <number>,
-          "detail": <string>,
-          "type": <string>,
-          "who": <string>}]
-        },
+      $poiUid: <POI>,
     },
     "sequences" : {
 
@@ -199,4 +75,98 @@ Cette base est organisée sous forme de collections de documents, chaque documen
 }
 ```
 
-(to be continued)
+## Objects meta types
+
+Since most of platform systems are `JSON` friendly, including the data storage, data structure will be presented in this format.
+
+### POI - `fs:{POIs}/`
+
+```JSON
+"POI": {
+    "uid": <string>       //unique POI id
+    "code": <string>,     //category/type/specy coding key format
+    "opacity": <number>,  //(deprecated) moved to <POIview>
+    "lat": <number>,      //latitude of POI report
+    "lon": <number>,      //longitude of POI report
+    "alt": <number>,      //altitude of POI report
+    "desc": <string>,     //additional information on POI
+    "plus": <number>,     //num of "also seen" feedbacks received
+    "notseen": <number>,  //num of "not seen" feedbacks received
+    "tup": <number>,      //num of "thumbup" feedbacks received
+    "created_t": <number>,      //creation timestamp
+    "creator_id": <string>,     //POI creator user unique id (uuid)
+    "creator_pseudo": <string>, //creator pseudo (autoupdated from creator_id)
+    "status": <"handled"|"disbelieved"|"locked"|"archived">, //visible status
+    "updated_t": <number>,      ///last update timestamp
+}
+```
+
+### Map tile content - `fs:{tiled_views}/`
+
+```JSON
+"tile":{
+  "_clotho": <bool>,
+  "a": <integer>,
+  "id": <string>,
+  "poi_lists":{
+    <string:category>:[<POIview>]
+  },
+  "updated_t": <integer>
+}
+```
+
+### POI viewable attributes - `fs:{poi_tiles}/tiled_views/{category}[]`
+
+```JSON
+<POIview>: {
+  "uid": <string>,
+  "code": <string>,
+  "opacity": <number>,
+  "lat": <number>,
+  "lon": <number>,
+  "status": <"handled"|"disbelieved"|"locked"|"archived">,
+}
+```
+
+### User feedback - `rtdb:/feedbacks/`
+
+```JSON
+"feedback": {
+  "at" : <number>,      //timestamp of feedback action
+  "type" : "PLUS|HANDLED|NOTSEEN|THUMBUP",    //feedback type
+  "owner" : <string>,   //feeback author uuid
+  "poi" : <string>,     //POI uid which is receiving the feeback
+  "pos" : [ 48.8350309, 2.3290567 ],  //[lat,lon] of author when sending feedback
+  "status" : "new",     //for future use must be set to "new"
+}
+```
+
+### Action item - `rtdb:/(buffer|tasks)/`
+
+```JSON
+"action": {
+  "at" :  <number>,               //timestamp to schedule action launch, 0 is instant launch
+  "worker" : <string:worker>,     //code name of the worker to launch
+  "options" : {<string:option>:*} //options object specific to worker
+  "owner" : <string>,             //action owner uuid,
+  "status" : "new|running|complete|error|archived",   //action status according to platform scheduling
+}
+
+```
+
+### Alert feed subscription item - `rtdb:/subs/`
+
+```JSON
+"subs" : {
+  "uuid": <string>,             //user uid owing the subscription
+  "feeds": [<string>],          //array of feed uid which user listens to
+  "status": "active|new|notified|read|archived", //subscription status
+  "trigger": <string>,          //POI event type
+  "mode": "all|firstof|...",    //type of triggering mode
+  "opts": <string>,             //option of the trigger
+  "filter": <number>,           //param value used to fast filter event of the feeder
+  "fopts": {<string:option>:*}, //options object specific to filter of this feeder
+  "logs": [<event>],            //array of POI events which had triggered the subscription
+  "name": <string>,             //code for alert naming label
+}
+```
