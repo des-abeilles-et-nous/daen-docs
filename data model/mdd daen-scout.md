@@ -111,7 +111,7 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 ### Map tile content - `fs:{tiled_views}/`
 
 ```JSON
-"<tile>":{
+"<Tile>":{
   "_clotho": <bool>,    //(internal) true if next tile refresh task is scheduled
   "a": <integer>,       //size in degree of arc of a square tile vertex
   "id": <string>,       //tile unique id
@@ -135,6 +135,15 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 }
 ```
 
+### User profile - `fs:{users}`
+
+````JSON
+"<User>": {
+  "uid": <string>
+  "..."
+}
+`
+
 ### User feedback - `rtdb:/feedbacks/`
 
 ```JSON
@@ -146,7 +155,7 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
   "pos" : [ 48.8350309, 2.3290567 ],  //[lat,lon] of author when sending feedback
   "status" : "new",     //for future use must be set to "new"
 }
-```
+````
 
 ### Action item - `rtdb:/(buffer|tasks)/`
 
