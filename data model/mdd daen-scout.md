@@ -54,32 +54,30 @@ We use a URL like notation to define storage location and the type of stored dat
 This storage is built as a collections of JSON documents or subcollection. Each node of the collectionhierarchy is searchable and can be indexed to improved search capabilities and performances. We structures daen collections as follows:
 
 ```JSON
-{
-  "__collections__": {
-    "tiles_view": {   //Collection of tiles with viewable POIs params
-      "$tileid": <tile>
+"__fs__": {
+  "tiles_view": {   //Collection of tiles with viewable POIs params
+    "$tileid": <tile>
+  },
+  "POIs" : {        //Collection of active, i.e. not archived, POIs
+    "$poiUid": <POI>,
+  },
+  "POIs_attic" : {  //Collection of archived POIs
+    "$poiUid": <POI>,
+  },
+  "sequences" : {   //Last auto numbered value given for each value category
+    "$seq_name": {"count":<number>, "prefix":<string>},
+  },
+  "poi_tile" : {    //Old tiled view tile model, kept for upward compatibility (deprecated)
+    "$tileid": <deprecated>
+  },
+  "tile_ids" : {    //(deprecated) workaround to keep track of tiles with viewable POIs
+    "$tileid": <deprecated>
+  },
+  "users": {
+    "$uuid":  {
+      (to be described)
     },
-    "POIs" : {        //Collection of active, i.e. not archived, POIs
-      "$poiUid": <POI>,
-    },
-    "POIs_attic" : {  //Collection of archived POIs
-      "$poiUid": <POI>,
-    },
-    "sequences" : {   //Last auto numbered value given for each value category
-      "$seq_name": {"count":<number>, "prefix":<string>},
-    },
-    "poi_tile" : {    //Old tiled view tile model, kept for upward compatibility (deprecated)
-      "$tileid": <deprecated>
-    },
-    "tile_ids" : {    //(deprecated) workaround to keep track of tiles with viewable POIs
-      "$tileid": <deprecated>
-    },
-    "users": {
-      "$uuid":  "{
-        (to be described)
-      }",
-    },
-  }
+  },
 }
 ```
 
