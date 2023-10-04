@@ -137,12 +137,42 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 
 ### User profile - `fs:{users}`
 
-````JSON
+```JSON
 "<User>": {
-  "uid": <string>
+  alerts:{
+      "blooming":{
+      "status": (string),
+      "subsid": <string>,
+    },
+  hornet:{
+    "status": (string),
+    "subsid": <string>,
+    },
+  nest:{
+    "status": (string),
+    "subsid": <string>,
+    },
+  },
+  "bkpr":<(string)>,
+  "created_t": <(timestamp)>,
+  "display_name": <(string)>,
+  "email":<(string)>,
+  "isBeekeeper": <(Boolean)>,
+  "isHunter":<(Boolean)>,
+  "modified_t":<(timestamp)>,
+  "num_id":<number>,
+  "picture":<string>,
+  "pseudo": <(string)>,
+  "public_id":<(string)>,
+  "refLocation":{
+  "isoCountryCode":<string>,
+  "latitude": <number>,
+  "longitude": <number>,
+  "postalCode": <string>,},
+  "uid": <string>,
   "..."
 }
-`
+```
 
 ### User feedback - `rtdb:/feedbacks/`
 
@@ -155,7 +185,7 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
   "pos" : [ 48.8350309, 2.3290567 ],  //[lat,lon] of author when sending feedback
   "status" : "new",     //for future use must be set to "new"
 }
-````
+```
 
 ### Action item - `rtdb:/(buffer|tasks)/`
 
