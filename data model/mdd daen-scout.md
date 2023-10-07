@@ -139,37 +139,51 @@ Since most of platform systems are `JSON` friendly, including the data storage, 
 
 ```JSON
 "<User>": {
-  alerts:{
-      "blooming":{
+  "alerts":{    // Map of alerts a user has explicitly created a subscription for
+    "blooming":{
+      "status": <string>,
+      "subsid": <string>,
+    },
+    "hornet":{
       "status": (string),
       "subsid": <string>,
     },
-  hornet:{
-    "status": (string),
-    "subsid": <string>,
+    "nest":{
+      "status": (string),
+      "subsid": <string>,
     },
-  nest:{
-    "status": (string),
-    "subsid": <string>,
-    },
+    "...",
   },
-  "bkpr":<(string)>,
-  "created_t": <(timestamp)>,
-  "display_name": <(string)>,
-  "email":<(string)>,
-  "isBeekeeper": <(Boolean)>,
-  "isHunter":<(Boolean)>,
-  "modified_t":<(timestamp)>,
-  "num_id":<number>,
-  "picture":<string>,
-  "pseudo": <(string)>,
-  "public_id":<(string)>,
-  "refLocation":{
-  "isoCountryCode":<string>,
-  "latitude": <number>,
-  "longitude": <number>,
-  "postalCode": <string>,},
-  "uid": <string>,
+  "feeds": [{   // Table of all feedbacks done by the user, for double feedback prevention
+    "at": <timestamp>,
+    "poi": <string>,
+    "feed": <feedback.type>,
+  }],
+  "{news_roll}": {    // News from user reports status change and other external processed events
+    "at": <timestamp>,
+    "news": <news.type>,
+    "poi": <string>,
+    "source": <string>,
+    "status": ["notified","new"],
+  },
+  "created_t": <timestamp>,   // user creation timestamp
+  "modified_t":<timestamp>,   // profile last modification time
+  "uid": <string>,            // user unique id
+  "num_id":<number>,          // user creation sequential number (+1 for each new user)
+  "display_name": <string>,   // user display name for OAuth provider
+  "email":<(string)>,         // user email (and login)
+  "isBeekeeper": <boolean>,   // is user a beekeeper
+  "bkpr":<(string)>,          // kind of beekeeping activity (see lov for list of possible values)
+  "isHunter":<boolean>,       // is the user a hornet hunter
+  "picture":<string>,         // user picture (default from social network)
+  "pseudo": <(string)>,       // user pseudo in Beefree app
+  "public_id":<(string)>,     // user unique public ID (not used)
+  "refLocation":{             // user reference position for location based alerts
+    "isoCountryCode":<string>,
+    "latitude": <number>,
+    "longitude": <number>,
+    "postalCode": <string>,
+  },
   "..."
 }
 ```
