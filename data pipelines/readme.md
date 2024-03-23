@@ -10,26 +10,32 @@ flowchart BT
 	bq[[GCP/BigQuery]]
     fb[/Facebook/]
     ggl[/Google/]
+    apl[/Apple/]
     lkr[\Looker/]
     firebase[(Firebase)]
 
     subgraph "App logic"
 		firebase <==POI, User (native sdk) ==> app
-		stry[/sentry/] -.debug (not).-> log
+		stry[/sentry/] -.debug (!).-> log
 		app --debug (sdk auto)--> stry
         app --Usage, debug (sdk)--> log
 	end
-	mnhn --POI.hornet.asian (sched scraping) --> firebase
-	siren --POI.apiary,POS,Opportunity (static) --> app
-	firebase --POI (sched addon) --> bq
-	log --Usage(GCP sink)--> bq
-	app --Audience, Usage (auto)--> ana
-	fb -.Audience, Usage (not merged).-> ana
-	app --User, Usage (OAuth)--> fb
-    app --User (OAuth)--> ggl
-    ggl ~~~ fb
-	bq --> lkr
+    mnhn --POI.hornet.asian (sched scraping) --> firebase
+    siren --POI.apiary,POS,Opportunity (static) --> app
+    firebase --POI (sched addon) --> bq
+    log --Usage(GCP sink)--> bq
+    app --Audience, Usage (auto)--> ana
+    fb -.Audience, Usage (!).-> ana
+    app <--User (OAuth)---> oa
+    subgraph oa [OAuth]
+        direction LR
+	fb
+    	apl
+        ggl
+    end
+    app --Usage (sdk)--> fb
+    bq --> lkr
     ana --> lkr
-  	ana --> ga[\adhoc Analytics/]
+    ana --> ga[\adhoc Analytics/]
 ```
 
