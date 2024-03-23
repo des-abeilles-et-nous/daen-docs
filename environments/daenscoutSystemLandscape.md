@@ -2,7 +2,7 @@
 
 ## Vision d'ensemble des systèmes
 
-![](https://cfs.daen.in/index.php/s/qnW2pC4G9Tk5zSo/preview)
+![](https://github.com/des-abeilles-et-nous/daen-docs/blob/main/beefree%20HLD.drawio.svg)
 
 ## Univers Firebase/Google Cloud Platform
 
