@@ -44,7 +44,7 @@ collection from FIrestore
 
 List of streams setup
 
-[./media/image9.png](./media/image9.png)
+![](./media/image9.png)
 ========================================
 
 For each collection, the install operation needs to be completed. For example,
