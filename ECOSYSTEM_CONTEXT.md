@@ -69,7 +69,11 @@ Each environment has:
 - Environment-specific credentials and configuration
 - Isolated user data and analytics
 
-Environment selection is controlled by the `DAEN_TARGET` environment variable across all repos.
+**Environment selection mechanism varies by repository:**
+- **daen-scout:** `DAEN_TARGET` environment variable (loads .env files)
+- **daen-fb-workers:** Firebase CLI with `.firebaserc` (project aliasing)
+- **fb-admin:** Service account key selection (interactive menu)
+See [Configuration Management](#configuration-management) below for details.
 
 ## Shared Firebase Data Structure
 
@@ -231,21 +235,35 @@ docs: update Firebase Realtime Database schema
 
 ## Configuration Management
 
-### Environment Variables
+### Environment Selection per Repository
 
-Each repository uses environment-specific configuration:
-
-**Selection mechanism:**
+**daen-scout (Mobile App):**
+Uses `DAEN_TARGET` environment variable to select configurations:
 ```bash
-DAEN_TARGET=dev    # Loads configuration for dev environment
-DAEN_TARGET=staging # Loads configuration for staging
-DAEN_TARGET=live    # Loads configuration for live/production
+DAEN_TARGET=dev    # Loads .env_dev, dev Firebase config
+DAEN_TARGET=staging # Loads .env_staging, staging Firebase config
+DAEN_TARGET=live    # Loads .env_live, live Firebase config
 ```
+- Configuration files: `.env.dist`, `.env_dev`, `.env_staging`, `.env_live`
+- Dynamic config: `app.config.js` processes environment variables based on `DAEN_TARGET`
+- Build profiles: `eas.json` specifies DAEN_TARGET per profile
 
-**Configuration patterns:**
-- Templates: `.env.dist` (reference with defaults)
-- Environment-specific: `.env_dev`, `.env_staging`, `.env_live`
-- Never commit: `.env.local` (developer overrides)
+**daen-fb-workers (Backend Cloud Functions):**
+Uses Firebase CLI project selection (not DAEN_TARGET):
+```bash
+firebase use dev      # Selects dev project (bsc-dev-7a548)
+firebase use staging  # Selects staging project (dsc-staging-eu)
+firebase use live     # Selects live project (dsc-live-eu)
+```
+- Project mapping: `.firebaserc` defines dev/sandbox/staging/live projects
+- Centralized config: `fb-worker-config.js` (not environment-specific)
+- Deployment: `firebase deploy` to selected project
+
+**fb-admin (Admin CLI):**
+Uses service account keys for project access:
+- Service accounts: `keys/{project-id}-admin.json` (gitignored)
+- Project selection: Interactive menu prompts user to select key file
+- Admin SDK: Initializes with selected service account credentials
 
 ### Secrets & Credentials
 

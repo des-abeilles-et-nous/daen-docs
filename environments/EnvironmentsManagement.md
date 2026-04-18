@@ -1,7 +1,13 @@
 # Gestion des environnements ![GDE](https://img.shields.io/badge/Status-In_Progress-orange?style=plastic)
 
-L'objectif de ce document est de présenter l'ensemble des pré-requis et opérations nécessaires au déploiement
-d'un nouvel environnement logiciel (production ou dev/test) pour l'application `daenscout`
+Ce document décrit l'architecture des environnements dans l'écosystème DAEN. 
+
+**Pour les instructions de configuration spécifiques à chaque application:**
+- **daen-scout** (mobile app): voir [`daen-scout/CLAUDE.md` — Configuration System](../../daen-scout/CLAUDE.md#configuration-system)
+- **daen-fb-workers** (backend): voir [`daen-fb-workers/CLAUDE.md` — Architecture Overview](../../daen-fb-workers/CLAUDE.md#firebase-projects-configuration)
+- **fb-admin** (admin tools): voir [`fb-admin/CLAUDE.md`](../../fb-admin/CLAUDE.md)
+
+**Pour les définitions d'environnements à l'échelle de l'écosystème**, voir [`ECOSYSTEM_CONTEXT.md` — Shared Development Environments](../ECOSYSTEM_CONTEXT.md#shared-development-environments).
 
 ## Environnements
 
