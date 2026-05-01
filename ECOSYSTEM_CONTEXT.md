@@ -124,19 +124,37 @@ RTDB stores frequently-changing and task data:
 
 ## Shared Libraries
 
-Ecosystem-wide libraries in `daen-lib/` (symlinked/copied into each repo):
+Ecosystem-wide libraries are versioned as [Bit](https://bit.dev) components under the **`desabeillesetnous.daen-js-shared`** scope. Each repo has a Bit workspace (`workspace.jsonc` + `.bitmap`) that tracks which version of each component it uses.
 
-- **`daen-objects/`** - Shared business object definitions and types
-  - Used by: all repositories
-  - Contains: POI, User, Subscription, Feed type definitions
+> **Full workflow details:** see [`dev framework/Bit Component Management.md`](dev%20framework/Bit%20Component%20Management.md)
 
-- **`daen-utils/`** - Common utility functions
-  - Used by: daen-scout, daen-fb-workers, fb-admin
-  - Contains: geolocation helpers, validation, formatting
+### Component registry
 
-- **`dev-utils/`** - Development and debugging utilities
-  - Used by: development workflows
-  - Contains: emulator setup, data import scripts
+| Component | Description | Canonical repo | Consumers |
+|---|---|---|---|
+| **`daen-firebase`** | Firebase SDK helpers, POI persistence, push notifications | `fb-admin/daen-config-cli` | `daen-fb-workers` |
+| **`daen-objects`** | Business object definitions (POI, User, Subscription, Feed) | `fb-admin/daen-config-cli` | all repos |
+| **`daen-utils`** | Geolocation helpers, validation, formatting | `daen-scout` | `daen-fb-workers`, `fb-admin` |
+| **`looped-carousel`** | Carousel UI component | `daen-scout` | `daen-scout` |
+| **`snackbar`** | Snackbar UI component | `daen-scout` | `daen-scout` |
+
+### Design principles
+
+- **Canonical source**: each component has one authoritative repo. Changes flow outward via `bit export`, not by editing copies.
+- **Runtime resolution**: repos always import shared components using **relative paths** (`require('../daen-objects')`), never npm package names (`@desabeillesetnous/...`). This keeps the GCP Functions deployment self-contained.
+- **Bit as sync tool**: Bit handles versioning and distribution. It does not change how modules resolve at runtime.
+- **Local overloads**: a repo may modify a component locally after `bit import` for project-specific needs. `bit status` will show it as modified. Only export back if the change is generic.
+
+### Quick reference
+
+```bash
+# Pull latest version of a component (run from workspace root)
+bit import desabeillesetnous.daen-js-shared/daen-objects
+
+# Publish a change from the canonical repo
+bit tag daen-firebase --patch --message "fix: ..."
+bit export
+```
 
 ## Development Standards
 
