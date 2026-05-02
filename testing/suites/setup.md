@@ -1,29 +1,18 @@
 <!--
   Suite: Environment & Setup  (testing/suites/setup.md)
   ───────────────────────────────────────────────────────
-  PURPOSE : Validates that every environment is correctly configured and that
-            all ecosystem components can reach their expected Firebase project
-            and third-party services. These tests are prerequisites for all
-            other suites.
-
-  SCOPE BREAKDOWN (9 test cases)
-    scope:repo   (daen-fb-workers only) — TC-SETUP-001, TC-SETUP-004, TC-SETUP-005
-      • Firebase CLI / .firebaserc reachability
-      • Firestore collection presence
-      • Realtime Database path presence
-
-    scope:system (full ecosystem required) — TC-SETUP-002, TC-SETUP-003,
-                                             TC-SETUP-006 to TC-SETUP-009
-      • daen-scout DAEN_TARGET env selection
-      • fb-admin service account key selection
-      • Facebook / Google Auth configuration
-      • Sentry connectivity
-      • EAS build profile artefact correctness
+  PURPOSE : Validates that each environment is correctly configured and that
+            all components of the ecosystem can reach their expected Firebase
+            project and third-party services.
 
   GENERATED TEST CASES
-  Only scope:repo test cases in this file are authored from daen-fb-workers
-  content. scope:system cases are included for completeness but will be
-  maintained when the corresponding repos are in scope.
+  Only test cases whose Component is daen-fb-workers are tagged scope:repo.
+  Test cases for daen-scout, fb-admin, and shared libs are tagged scope:system
+  and will be authored in their respective repo test passes.
+
+  Scope key:
+    repo   — runs against daen-fb-workers in isolation (PR gate, sprint QA).
+    system — requires the full ecosystem / multiple repos.
 -->
 
 # Suite: Environment & Setup
@@ -69,7 +58,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, sandbox, staging, live
 **Priority:** P1
 **Component:** daen-fb-workers
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - Firebase CLI installed and authenticated.
@@ -95,7 +83,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, staging, live
 **Priority:** P1
 **Component:** daen-scout
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - `.env_dev`, `.env_staging`, `.env_live` files present (based on `.env.dist`).
@@ -121,7 +108,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, sandbox, staging
 **Priority:** P1
 **Component:** fb-admin
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - Service account key files present at `keys/{project-id}-admin.json` (gitignored).
@@ -147,7 +133,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, sandbox, staging
 **Priority:** P1
 **Component:** daen-fb-workers
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - Firebase project targeted via CLI for the tested environment.
@@ -173,7 +158,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, sandbox, staging
 **Priority:** P1
 **Component:** daen-fb-workers
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - Firebase project targeted via CLI.
@@ -199,7 +183,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, live
 **Priority:** P2
 **Component:** daen-scout
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - Facebook app credentials (`FACEBOOK_APPID`, `FACEBOOK_CLIENT_TOKEN`, `FACEBOOK_DISPLAYNAME`, `FACEBOOK_SCHEME`) set in the target `.env` file.
@@ -226,7 +209,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, staging
 **Priority:** P2
 **Component:** daen-scout
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - `buildconfig/<target>/google-services.json` (Android) and `buildconfig/<target>/GoogleService-Info.plist` (iOS) present for the target.
@@ -254,7 +236,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev
 **Priority:** P3
 **Component:** daen-scout
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH` set in the target `.env`.
@@ -281,7 +262,6 @@ Third-party sub-systems validated in this suite:
 **Environment:** dev, staging
 **Priority:** P2
 **Component:** daen-scout
-**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - `eas.json` build profiles defined for `dev` (internal) and `staging` (store or internal).
