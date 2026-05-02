@@ -88,15 +88,21 @@ All test activities use the four-tier environment system shared by all repositor
 
 ## 5. Test Suites
 
-The following functional suites group test cases by domain. Each suite has a dedicated file in `testing/suites/`.
+The eight suites below are the authoritative specification source for all test cases.
+They maintain a **1:1 correspondence with the Jira test plan sections** — see the mapping table in [Section 10](#10-daen-docs--jira-correspondence).
 
-| Suite | File | Domain |
-|---|---|---|
-| POI lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | POI creation, status transitions, archival |
-| Task orchestration | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `buffer`/`tasks` queue, worker dispatch, error handling |
-| User & auth | [`suites/user-auth.md`](suites/user-auth.md) | Profile creation, roles, alert subscriptions, news roll |
-| Tile rendering | [`suites/tile-rendering.md`](suites/tile-rendering.md) | Tile refresh, `_clotho` flag, POI visibility in tiles |
-| Feedback pipeline | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | Feedback ingestion, counter updates, double-feedback prevention |
+| # | Suite | File | Jira plan prefix | Domain |
+|---|---|---|---|---|
+| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Environment config, credentials, Firebase project access |
+| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | Feedback ingestion, counter updates, double-feedback prevention |
+| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | POI creation, status transitions, archival |
+| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | Alert subscriptions, push notifications, news roll |
+| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) |
+| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers |
+| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Firestore rules, RTDB rules, client vs admin SDK boundaries |
+| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | `DAEN_TARGET`, `.firebaserc`, Bit components, env config |
+
+> **Note on tile rendering:** tile refresh logic (`tiles_view`, `_clotho` flag, POI-to-tile trigger chain) is covered as a subsection of suite 6 (Cloud Functions behavior), consistent with its treatment as a backend technical concern in the Jira plan.
 
 ---
 
@@ -108,10 +114,11 @@ Each test case in a suite file follows this structure:
 ### TC-<SUITE>-<NNN> — <Short title>
 
 **Type:** unit | integration | e2e | regression | smoke
+**Jira type:** Tâche | Story | IT
 **Environment:** dev | sandbox | staging | live
 **Priority:** P1 (critical) | P2 (high) | P3 (medium) | P4 (low)
 **Component:** daen-scout | daen-fb-workers | fb-admin | shared
-**Jira:** link or ticket reference (managed in Jira)
+**Jira:** <ticket or test plan reference — managed in Jira>
 
 **Preconditions:**
 - ...
@@ -164,11 +171,23 @@ The following are explicitly out of scope for this test strategy:
 
 ---
 
-## 10. Relationship to Jira
+## 10. daen-docs ↔ Jira Correspondence
 
-```
-daen-docs / testing/          →  WHAT to test and HOW (specifications, strategy, fixtures)
-Jira                          →  WHO, WHEN, and RESULT (plans, runs, defects, coverage)
-```
+This table is the authoritative mapping between the specification space (daen-docs) and the execution space (Jira). It must be kept in sync whenever a suite is added, renamed, or split.
 
-When a test case is created or updated in this repository, a corresponding test case should exist or be created in Jira referencing the same ID (e.g. `TC-POI-001`).
+| daen-docs suite file | Jira plan section | Jira prefix | Jira task types | TC ID prefix |
+|---|---|---|---|---|
+| `suites/setup.md` | Environment & setup | `SETUP` | Tâche | `TC-SETUP` |
+| `suites/feedback-pipeline.md` | Report submission | `FUNC` | Tâche, Story | `TC-FEED` |
+| `suites/poi-lifecycle.md` | Report review and lifecycle | `FUNC` | Tâche, Story | `TC-POI` |
+| `suites/notifications.md` | Notifications and follow-up | `FUNC` | Tâche, Story | `TC-NOTIF` |
+| `suites/user-auth.md` | Authentication and user access | `FUNC` | Tâche, Story | `TC-AUTH` |
+| `suites/task-orchestration.md` | Cloud Functions behavior | `IT` | Tâche, IT | `TC-FUNC` |
+| `suites/firebase-security.md` | Firebase security and data access | `IT` | Tâche, IT | `TC-SEC` |
+| `suites/build-deployment.md` | Build, deployment and configuration | `IT` | Tâche, IT | `TC-BUILD` |
+
+**Rules:**
+- A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding entry in the matching Jira plan section.
+- Execution data (run date, result, assignee, defect links) lives **only** in Jira.
+- Specification data (preconditions, steps, expected result) lives **only** in daen-docs.
+- If a Jira ticket has no matching `TC-*` ID in daen-docs, it must be flagged for backfill in the next documentation sprint.
