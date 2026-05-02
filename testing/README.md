@@ -126,23 +126,37 @@ Key principles:
 - **The current suite list is fixed** — do not add, rename, or split suites without updating Section 10 and the corresponding Jira Epics.
 - **Scope is a run-time selector, not a suite property.** Every suite contains a mix of `repo` and `system` test cases. A `repo` run filters by `Component: daen-fb-workers` + `Scope: repo`. A `system` run takes all test cases tagged `Scope: system`.
 
-### 5.2 Suite list
+### 5.2 Test case classification
 
-The eight suites below are the authoritative specification source for all test cases.
+Every test case within a suite is classified as one of two types. This classification is independent of the suite — a predominantly IT-focused suite can contain Functional test cases and vice versa.
+
+| Type | Label in suite file | Jira task type | Description |
+|---|---|---|---|
+| **Functional** | `**Type:** functional` | `Tâche` / `Story` | Validates observable user-facing or domain behaviour: submission flows, lifecycle transitions, notification delivery, authentication. Black-box perspective. |
+| **Integration Test (IT)** | `**Type:** integration` | `Tâche` / `IT` | Validates technical interactions between components: Firebase rules, Cloud Function triggers, queue mechanics, SDK boundaries. White-box / infrastructure perspective. |
+
+> A suite file must clearly label each test case type. Suite-level orientation (Functional or IT) is indicated in the suite header and in the master table, but does not restrict the types of individual test cases within it.
+
+### 5.3 Suite list
+
+The eleven suites below are the authoritative specification source for all test cases.
 They maintain a **1:1 correspondence with the Jira test plan Epics** — see the mapping table in [Section 10](#10-daen-docs--jira-correspondence).
 
-| # | Suite | File | Jira Epic prefix | Audience | Domain | Default scope | daen-fb-workers coverage |
+| # | Suite | File | TC prefix | Jira Epic prefix | Orientation | Audience | Default scope |
 |---|---|---|---|---|---|---|---|
-| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Developers | Environment config, credentials, Firebase project access | `system` | Partial — TC-SETUP-001, 004, 005 are `repo` |
-| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | QA, beta users | Feedback ingestion, counter updates, double-feedback prevention | `repo` | Primary — backend pipeline logic |
-| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | QA, beta users | POI creation, status transitions, archival | `repo` | Primary — POI write and trigger chain |
-| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | QA, beta users | Alert subscriptions, push notifications, news roll | `repo` / `system` | Partial — dispatch logic is `repo`; FCM delivery requires `system` |
-| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | QA, developers | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) | `repo` | Partial — Firestore user record and role flags |
-| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Developers, backend QA | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers | `repo` | Full — all test cases target `daen-fb-workers` |
-| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Developers | Firestore rules, RTDB rules, client vs admin SDK boundaries | `repo` | Full — rules files live in `daen-fb-workers` |
-| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | Developers, release manager | `DAEN_TARGET`, `.firebaserc`, Bit components, env config | `repo` | Partial — `.firebaserc`, `firebase.json`, `functions/` build |
+| 1 | Environment & Setup | [`suites/setup.md`](suites/setup.md) | `TC-SETUP` | `SETUP` | IT | Developers | `system` |
+| 2 | Build, Deployment & Configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `TC-BUILD` | `IT` | IT | Developers, release manager | `repo` |
+| 3 | POI Reporting & Feedback | [`suites/poi-reporting.md`](suites/poi-reporting.md) | `TC-REPORT` | `FUNC` | Functional | QA, beta users | `repo` |
+| 4 | POI Lifecycle & Backend | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `TC-POI` | `FUNC` | Functional | QA, beta users | `repo` |
+| 5 | Notifications & Follow-up | [`suites/notifications.md`](suites/notifications.md) | `TC-NOTIF` | `FUNC` | Functional | QA, beta users | `repo` / `system` |
+| 6 | Authentication & User Access | [`suites/user-auth.md`](suites/user-auth.md) | `TC-AUTH` | `FUNC` | Functional | QA, developers | `repo` |
+| 7 | Cloud Functions & Task Orchestration | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `TC-WORKER` | `IT` | IT | Developers, backend QA | `repo` |
+| 8 | Firebase Security & Data Access | [`suites/firebase-security.md`](suites/firebase-security.md) | `TC-FB` | `IT` | IT | Developers | `repo` |
+| 9 | Data Integrity & Schema Validation | [`suites/data-integrity.md`](suites/data-integrity.md) | `TC-DATA` | `IT` | IT | Developers, backend QA | `repo` |
+| 10 | Realtime Database | [`suites/rtdb.md`](suites/rtdb.md) | `TC-RTDB` | `IT` | IT | Developers | `repo` |
+| 11 | Shared Utilities & Cross-repo Helpers | [`suites/shared-utils.md`](suites/shared-utils.md) | `TC-SHARED` | `IT` | IT | Developers | `dev` |
 
-> **Note on tile rendering:** tile refresh logic (`tiles_view`, `_clotho` flag, POI-to-tile trigger chain) is covered as a subsection of suite 6 (Cloud Functions behavior), consistent with its treatment as a backend technical concern in the Jira plan.
+> **Note on tile rendering:** tile refresh logic (`tiles_view`, `_clotho` flag, POI-to-tile trigger chain) is covered as a subsection of suite 7 (Cloud Functions & Task Orchestration), consistent with its treatment as a backend technical concern in the Jira plan.
 
 ---
 
@@ -151,9 +165,9 @@ They maintain a **1:1 correspondence with the Jira test plan Epics** — see the
 Each test case in a suite file follows this structure:
 
 ```
-### TC-<SUITE>-<NNN> — <Short title>
+### TC-<PREFIX>-<NNN> — <Short title>
 
-**Type:** unit | integration | e2e | regression | smoke
+**Type:** functional | integration
 **Scope:** repo | system
 **Jira type:** Tâche | Story | IT
 **Environment:** dev | sandbox | staging | live
@@ -171,6 +185,10 @@ Each test case in a suite file follows this structure:
 **Expected result:**
 - ...
 ```
+
+**Type values:**
+- `functional` — validates observable user-facing or domain behaviour. Black-box perspective.
+- `integration` — validates technical interactions between components. White-box / infrastructure perspective.
 
 **Scope values:**
 - `repo` — the test case can be executed against a single repository in isolation. Use for feature development, per-repo non-regression, and PR gates.
@@ -220,21 +238,27 @@ The following are explicitly out of scope for this test strategy:
 
 This table is the authoritative mapping between the specification space (daen-docs) and the execution space (Jira). It must be kept in sync whenever a suite is added, renamed, or split.
 
-| daen-docs suite file | Jira Epic | Jira prefix | Jira task types | TC ID prefix |
-|---|---|---|---|---|
-| `suites/setup.md` | Environment & setup | `SETUP` | Tâche | `TC-SETUP` |
-| `suites/feedback-pipeline.md` | Report submission | `FUNC` | Tâche, Story | `TC-FEED` |
-| `suites/poi-lifecycle.md` | Report review and lifecycle | `FUNC` | Tâche, Story | `TC-POI` |
-| `suites/notifications.md` | Notifications and follow-up | `FUNC` | Tâche, Story | `TC-NOTIF` |
-| `suites/user-auth.md` | Authentication and user access | `FUNC` | Tâche, Story | `TC-AUTH` |
-| `suites/task-orchestration.md` | Cloud Functions behavior | `IT` | Tâche, IT | `TC-FUNC` |
-| `suites/firebase-security.md` | Firebase security and data access | `IT` | Tâche, IT | `TC-SEC` |
-| `suites/build-deployment.md` | Build, deployment and configuration | `IT` | Tâche, IT | `TC-BUILD` |
+> 🔶 **Columns marked To Be Refined** (Jira components, env scope, default scope) are inferred from architecture docs and require validation against actual code and Jira configuration.
+
+| daen-docs suite file | Jira Epic title | TC prefix | Jira prefix | Orientation | Jira components 🔶 | Env scope 🔶 |
+|---|---|---|---|---|---|---|
+| `suites/setup.md` | Environment & Setup | `TC-SETUP` | `SETUP` | IT | `firebase` `gcp` `expo-build` | dev / sandbox / staging |
+| `suites/build-deployment.md` | Build, Deployment & Configuration | `TC-BUILD` | `IT` | IT | `fb-workers` `gcp` `expo-build` | dev / staging |
+| `suites/poi-reporting.md` | POI Reporting & Feedback | `TC-REPORT` | `FUNC` | Functional | `beefree` `fb-workers` `firebase` | dev / staging |
+| `suites/poi-lifecycle.md` | POI Lifecycle & Backend | `TC-POI` | `FUNC` | Functional | `fb-workers` `firebase` | dev / sandbox |
+| `suites/notifications.md` | Notifications & Follow-up | `TC-NOTIF` | `FUNC` | Functional | `beefree` `fb-workers` `expo-build` | dev / staging |
+| `suites/user-auth.md` | Authentication & User Access | `TC-AUTH` | `FUNC` | Functional | `beefree` `firebase` | dev / staging |
+| `suites/task-orchestration.md` | Cloud Functions & Task Orchestration | `TC-WORKER` | `IT` | IT | `fb-workers` `gcp` | dev / sandbox |
+| `suites/firebase-security.md` | Firebase Security & Data Access | `TC-FB` | `IT` | IT | `firebase` `fb-workers` | dev / sandbox |
+| `suites/data-integrity.md` | Data Integrity & Schema Validation | `TC-DATA` | `IT` | IT | `firebase` `fb-workers` | dev / staging |
+| `suites/rtdb.md` | Realtime Database | `TC-RTDB` | `IT` | IT | `firebase` `fb-workers` | dev / sandbox |
+| `suites/shared-utils.md` | Shared Utilities & Cross-repo Helpers | `TC-SHARED` | `IT` | IT | `fb-workers` `beefree` | dev |
 
 **Rules:**
 - Each suite has a corresponding **Jira Epic** in `DATEST`. The Epic key must be referenced in the suite's `.md` file header.
 - A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding Jira Task/Story under that Epic.
 - Execution data (run date, result, assignee, defect links) lives **only** in Jira.
-- Specification data (preconditions, steps, expected result) lives **only** in Jira tickets — suite `.md` files in daen-docs contain scope, audience, and Epic link only.
+- Specification data (preconditions, steps, expected result) lives **only** in suite `.md` files in daen-docs.
 - If a Jira ticket has no matching `TC-*` ID in daen-docs, it must be flagged for backfill in the next documentation sprint.
-- Each Jira task must carry one of the labels `scope:repo` or `scope:system` to enable filtered test plan runs. All `daen-fb-workers`-only test cases default to `scope:repo`.
+- Each Jira task must carry one of the labels `scope:repo` or `scope:system` to enable filtered test plan runs.
+- Each Jira task must carry one of the labels `type:functional` or `type:it` to enable type-filtered runs.
