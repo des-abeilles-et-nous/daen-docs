@@ -88,19 +88,32 @@ All test activities use the four-tier environment system shared by all repositor
 
 ## 5. Test Suites
 
-The eight suites below are the authoritative specification source for all test cases.
-They maintain a **1:1 correspondence with the Jira test plan sections** — see the mapping table in [Section 10](#10-daen-docs--jira-correspondence).
+### 5.1 Suite model
 
-| # | Suite | File | Jira plan prefix | Domain |
-|---|---|---|---|---|
-| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Environment config, credentials, Firebase project access |
-| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | Feedback ingestion, counter updates, double-feedback prevention |
-| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | POI creation, status transitions, archival |
-| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | Alert subscriptions, push notifications, news roll |
-| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) |
-| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers |
-| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Firestore rules, RTDB rules, client vs admin SDK boundaries |
-| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | `DAEN_TARGET`, `.firebaserc`, Bit components, env config |
+A **suite** is a scoped collection of test cases targeting a specific domain, designed to be executed by a **targeted group of users** (developers, QA, beta users, release managers, etc.).
+
+Key principles:
+
+- **Suites may overlap.** A test case can appear in more than one suite if it is relevant to different audiences or assessment contexts. Overlap is intentional and acceptable.
+- **Coverage is defined by union.** What matters is that the union of all suites covers the entire test universe — every meaningful behaviour of the ecosystem must be reachable through at least one suite.
+- **Suites are not mutually exclusive.** They are audience-oriented views over the test space, not partitions of it.
+- **The current suite list is fixed** — do not add, rename, or split suites without updating Section 10 and the corresponding Jira Epics.
+
+### 5.2 Suite list
+
+The eight suites below are the authoritative specification source for all test cases.
+They maintain a **1:1 correspondence with the Jira test plan Epics** — see the mapping table in [Section 10](#10-daen-docs--jira-correspondence).
+
+| # | Suite | File | Jira Epic prefix | Audience | Domain |
+|---|---|---|---|---|---|
+| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Developers | Environment config, credentials, Firebase project access |
+| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | QA, beta users | Feedback ingestion, counter updates, double-feedback prevention |
+| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | QA, beta users | POI creation, status transitions, archival |
+| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | QA, beta users | Alert subscriptions, push notifications, news roll |
+| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | QA, developers | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) |
+| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Developers, backend QA | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers |
+| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Developers | Firestore rules, RTDB rules, client vs admin SDK boundaries |
+| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | Developers, release manager | `DAEN_TARGET`, `.firebaserc`, Bit components, env config |
 
 > **Note on tile rendering:** tile refresh logic (`tiles_view`, `_clotho` flag, POI-to-tile trigger chain) is covered as a subsection of suite 6 (Cloud Functions behavior), consistent with its treatment as a backend technical concern in the Jira plan.
 
@@ -175,7 +188,7 @@ The following are explicitly out of scope for this test strategy:
 
 This table is the authoritative mapping between the specification space (daen-docs) and the execution space (Jira). It must be kept in sync whenever a suite is added, renamed, or split.
 
-| daen-docs suite file | Jira plan section | Jira prefix | Jira task types | TC ID prefix |
+| daen-docs suite file | Jira Epic | Jira prefix | Jira task types | TC ID prefix |
 |---|---|---|---|---|
 | `suites/setup.md` | Environment & setup | `SETUP` | Tâche | `TC-SETUP` |
 | `suites/feedback-pipeline.md` | Report submission | `FUNC` | Tâche, Story | `TC-FEED` |
@@ -187,7 +200,8 @@ This table is the authoritative mapping between the specification space (daen-do
 | `suites/build-deployment.md` | Build, deployment and configuration | `IT` | Tâche, IT | `TC-BUILD` |
 
 **Rules:**
-- A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding entry in the matching Jira plan section.
+- Each suite has a corresponding **Jira Epic** in `DATEST`. The Epic key must be referenced in the suite's `.md` file header.
+- A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding Jira Task/Story under that Epic.
 - Execution data (run date, result, assignee, defect links) lives **only** in Jira.
-- Specification data (preconditions, steps, expected result) lives **only** in daen-docs.
+- Specification data (preconditions, steps, expected result) lives **only** in Jira tickets — suite `.md` files in daen-docs contain scope, audience, and Epic link only.
 - If a Jira ticket has no matching `TC-*` ID in daen-docs, it must be flagged for backfill in the next documentation sprint.
