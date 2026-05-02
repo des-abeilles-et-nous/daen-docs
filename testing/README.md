@@ -130,10 +130,10 @@ Key principles:
 
 Every test case within a suite is classified as one of two types. This classification is independent of the suite — a predominantly IT-focused suite can contain Functional test cases and vice versa.
 
-| Type | Label in suite file | Jira task type | Description |
+| Type | Label in suite file | Jira issue type | Description |
 |---|---|---|---|
-| **Functional** | `**Type:** functional` | `Tâche` / `Story` | Validates observable user-facing or domain behaviour: submission flows, lifecycle transitions, notification delivery, authentication. Black-box perspective. |
-| **Integration Test (IT)** | `**Type:** integration` | `Tâche` / `IT` | Validates technical interactions between components: Firebase rules, Cloud Function triggers, queue mechanics, SDK boundaries. White-box / infrastructure perspective. |
+| **Functional** | `**Type:** functional` | `Story` | Validates observable user-facing or domain behaviour: submission flows, lifecycle transitions, notification delivery, authentication. Black-box perspective. |
+| **Integration Test (IT)** | `**Type:** integration` | `IT` | Validates technical interactions between components: Firebase rules, Cloud Function triggers, queue mechanics, SDK boundaries. White-box / infrastructure perspective. |
 
 > A suite file must clearly label each test case type. Suite-level orientation (Functional or IT) is indicated in the suite header and in the master table, but does not restrict the types of individual test cases within it.
 
@@ -169,7 +169,7 @@ Each test case in a suite file follows this structure:
 
 **Type:** functional | integration
 **Scope:** repo | system
-**Jira type:** Tâche | Story | IT
+**Jira type:** Story | IT
 **Environment:** dev | sandbox | staging | live
 **Priority:** P1 (critical) | P2 (high) | P3 (medium) | P4 (low)
 **Component:** daen-scout | daen-fb-workers | fb-admin | shared
@@ -256,9 +256,110 @@ This table is the authoritative mapping between the specification space (daen-do
 
 **Rules:**
 - Each suite has a corresponding **Jira Epic** in `DATEST`. The Epic key must be referenced in the suite's `.md` file header.
-- A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding Jira Task/Story under that Epic.
+- A test case defined in daen-docs (`TC-<PREFIX>-NNN`) **must** have a corresponding Jira issue (Story or IT) under that Epic.
 - Execution data (run date, result, assignee, defect links) lives **only** in Jira.
 - Specification data (preconditions, steps, expected result) lives **only** in suite `.md` files in daen-docs.
 - If a Jira ticket has no matching `TC-*` ID in daen-docs, it must be flagged for backfill in the next documentation sprint.
 - Each Jira task must carry one of the labels `scope:repo` or `scope:system` to enable filtered test plan runs.
 - Each Jira task must carry one of the labels `type:functional` or `type:it` to enable type-filtered runs.
+
+---
+
+## 11. Jira Project Structure and Implementation Model
+
+### 11.1 Project: DATEST
+
+All testing activity is tracked in the Jira project **`DATEST`**. This project is the single execution space for the DAEN-SCOUT ecosystem test strategy. It is distinct from the development project (which tracks features and bugs) and is scoped exclusively to test specification, campaigns, and results.
+
+### 11.2 Issue Type Hierarchy
+
+The `DATEST` project uses four issue types with strictly defined roles. Using an issue type outside its defined role is not permitted.
+
+| Issue type | Role | When to use |
+|---|---|---|
+| **Epic** | Test plan — maps 1:1 to a daen-docs suite | One Epic per suite (see Section 10). Epics are permanent; they are the repository of all test cases for that suite. |
+| **Story** | Functional test case | Use for every test case of type `functional`. Represents a user-facing or domain behaviour to validate. |
+| **IT** | Integration test case | Use for every test case of type `integration`. Represents a technical interaction between components. |
+| **Task** | Non-testing work item | Reserved exclusively for operational work: environment setup, tooling configuration, documentation tasks, test data preparation. **Never use Task for test cases.** |
+
+> `Subtask` is not an independent issue type — it is a child item created under a Story or IT during a campaign run (see Section 11.5).
+
+### 11.3 Epic Naming Convention
+
+Each Epic corresponds to one suite and must follow this naming pattern:
+
+```
+[<PREFIX>] <Suite label>
+```
+
+Examples:
+
+| Suite | Epic name |
+|---|---|
+| Environment & Setup | `[SETUP] Environment & Setup` |
+| POI Reporting & Feedback | `[REPORT] POI Reporting & Feedback` |
+| Cloud Functions & Task Orchestration | `[WORKER] Cloud Functions & Task Orchestration` |
+| Shared Utilities & Cross-repo Helpers | `[SHARED] Shared Utilities & Cross-repo Helpers` |
+
+The prefix in brackets must match the `TC prefix` column in the suite list (Section 5.3) and the Master Table.
+
+### 11.4 Test Case Issues (Story / IT)
+
+Each Story or IT in `DATEST` represents **one test case from a daen-docs suite file**. These issues are the **master repository** of test cases — they are permanent, never deleted, and represent the full catalogue of what can be tested.
+
+Required fields for every Story / IT:
+
+| Field | Value |
+|---|---|
+| **Summary** | `<TC-ID> — <Short title>` (e.g. `TC-WORKER-003 — Task dispatched on buffer write`) |
+| **Epic Link** | The Epic corresponding to the suite this test case belongs to |
+| **Component/s** | One or more Jira components from the reference list (Section 11.6) |
+| **Priority** | P1 / P2 / P3 / P4 — aligned with the daen-docs suite file |
+| **Labels** | `scope:repo` or `scope:system` **and** `type:functional` or `type:it` |
+| **Description** | Reference to the daen-docs TC entry: suite file path + TC ID. Do not duplicate steps here. |
+
+> The steps, preconditions, and expected results are **not** duplicated in Jira. The Jira issue references the daen-docs specification. Jira owns execution data only.
+
+### 11.5 Campaign Execution Model
+
+A **campaign** is a scoped, time-bounded test run. It is not a separate issue type — it is implemented by **duplicating** a selection of Story / IT issues from the master Epics and creating **Subtasks** under each duplicate to track individual execution attempts.
+
+Campaign lifecycle:
+
+1. **Define scope** — select test cases by filtering on `scope:`, `type:`, component, priority, or environment labels.
+2. **Duplicate issues** — clone the selected Stories / ITs into the campaign sprint or a dedicated campaign Epic. The clone carries the original TC-ID in its summary for traceability.
+3. **Create Subtasks** — for each cloned issue, create one Subtask per execution attempt (one per environment, one per tester, or one per run date as needed). The Subtask carries: assignee, run date, environment, result (Pass / Fail / Blocked), and links to any defect issues.
+4. **Run and record** — testers work through Subtasks, updating status and attaching evidence (logs, screenshots) directly in Jira.
+5. **Close campaign** — when all Subtasks are resolved, the campaign Epic or sprint is closed. The master Story / IT issues in their original Epics are **not** modified.
+
+> The master test case issues (Stories / ITs under suite Epics) must remain untouched between campaigns. They are the specification repository, not the execution tracker.
+
+### 11.6 Jira Components Reference
+
+> The source of truth for components is the Jira project `DATEST`. Do not modify component definitions here — update in Jira first, then reflect here.
+
+| Component | Covers |
+|---|---|
+| `beefree` | Mobile frontend (`daen-scout`) |
+| `expo-build` | Expo EAS build chain and local builds |
+| `fb-workers` | Backend Cloud Functions (`daen-fb-workers`) |
+| `firebase` | Firebase tenant: Firestore, RTDB, Auth, Storage |
+| `gcp` | GCP tenant: Cloud Scheduler, Pub/Sub, logging |
+
+### 11.7 Label Reference
+
+Every Story and IT must carry exactly one label from each of the two label groups below.
+
+**Scope group** (run-time selector):
+
+| Label | Meaning |
+|---|---|
+| `scope:repo` | Test can run against a single repo in isolation |
+| `scope:system` | Test requires the full ecosystem |
+
+**Type group** (test nature):
+
+| Label | Meaning |
+|---|---|
+| `type:functional` | Functional test — maps to issue type Story |
+| `type:it` | Integration test — maps to issue type IT |
