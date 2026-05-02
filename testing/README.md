@@ -1,3 +1,29 @@
+<!--
+  DAEN-SCOUT — Test Strategy  (testing/README.md)
+  ─────────────────────────────────────────────────
+  PURPOSE : Master reference for what to test, how to approach it, and where
+            each testing activity belongs across the four-repo DAEN-SCOUT
+            ecosystem.
+
+  SCOPE MODEL
+  Each test case carries a Scope field:
+    • repo   — targets a single repository in isolation; used for feature
+               development and per-repo non-regression (PR gates, sprint QA).
+    • system — requires the full ecosystem running together; reserved for
+               large environment changes, cross-repo integration passes, and
+               release gates.
+  The default execution mode is repo-scoped. System-scoped runs are opt-in.
+
+  GENERATED TEST CASES
+  Suite files (.md) only contain test cases whose Component is daen-fb-workers
+  (scope:repo) or cross-repo cases explicitly tagged scope:system.
+  Test cases for daen-scout, fb-admin, and shared libs are authored separately.
+
+  EXECUTION TRACKING
+  Specification lives here. Execution (run date, result, assignee, defects)
+  lives exclusively in Jira — see Section 10 for the correspondence table.
+-->
+
 # DAEN-SCOUT — Test Strategy
 
 > **Scope of this document:** defines *what* to test, *how* to approach it, and *where* each testing activity belongs.
@@ -98,22 +124,23 @@ Key principles:
 - **Coverage is defined by union.** What matters is that the union of all suites covers the entire test universe — every meaningful behaviour of the ecosystem must be reachable through at least one suite.
 - **Suites are not mutually exclusive.** They are audience-oriented views over the test space, not partitions of it.
 - **The current suite list is fixed** — do not add, rename, or split suites without updating Section 10 and the corresponding Jira Epics.
+- **Scope is a run-time selector, not a suite property.** Every suite contains a mix of `repo` and `system` test cases. A `repo` run filters by `Component: daen-fb-workers` + `Scope: repo`. A `system` run takes all test cases tagged `Scope: system`.
 
 ### 5.2 Suite list
 
 The eight suites below are the authoritative specification source for all test cases.
 They maintain a **1:1 correspondence with the Jira test plan Epics** — see the mapping table in [Section 10](#10-daen-docs--jira-correspondence).
 
-| # | Suite | File | Jira Epic prefix | Audience | Domain |
-|---|---|---|---|---|---|
-| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Developers | Environment config, credentials, Firebase project access |
-| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | QA, beta users | Feedback ingestion, counter updates, double-feedback prevention |
-| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | QA, beta users | POI creation, status transitions, archival |
-| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | QA, beta users | Alert subscriptions, push notifications, news roll |
-| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | QA, developers | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) |
-| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Developers, backend QA | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers |
-| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Developers | Firestore rules, RTDB rules, client vs admin SDK boundaries |
-| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | Developers, release manager | `DAEN_TARGET`, `.firebaserc`, Bit components, env config |
+| # | Suite | File | Jira Epic prefix | Audience | Domain | Default scope | daen-fb-workers coverage |
+|---|---|---|---|---|---|---|---|
+| 1 | Environment & setup | [`suites/setup.md`](suites/setup.md) | `SETUP` | Developers | Environment config, credentials, Firebase project access | `system` | Partial — TC-SETUP-001, 004, 005 are `repo` |
+| 2 | Report submission | [`suites/feedback-pipeline.md`](suites/feedback-pipeline.md) | `FUNC` | QA, beta users | Feedback ingestion, counter updates, double-feedback prevention | `repo` | Primary — backend pipeline logic |
+| 3 | Report review and lifecycle | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `FUNC` | QA, beta users | POI creation, status transitions, archival | `repo` | Primary — POI write and trigger chain |
+| 4 | Notifications and follow-up | [`suites/notifications.md`](suites/notifications.md) | `FUNC` | QA, beta users | Alert subscriptions, push notifications, news roll | `repo` / `system` | Partial — dispatch logic is `repo`; FCM delivery requires `system` |
+| 5 | Authentication and user access | [`suites/user-auth.md`](suites/user-auth.md) | `FUNC` | QA, developers | Firebase Auth, user profile, roles (`isBeekeeper`, `isHunter`) | `repo` | Partial — Firestore user record and role flags |
+| 6 | Cloud Functions behavior | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `IT` | Developers, backend QA | Worker dispatch, `buffer`/`tasks` queue, tile refresh, triggers | `repo` | Full — all test cases target `daen-fb-workers` |
+| 7 | Firebase security and data access | [`suites/firebase-security.md`](suites/firebase-security.md) | `IT` | Developers | Firestore rules, RTDB rules, client vs admin SDK boundaries | `repo` | Full — rules files live in `daen-fb-workers` |
+| 8 | Build, deployment and configuration | [`suites/build-deployment.md`](suites/build-deployment.md) | `IT` | Developers, release manager | `DAEN_TARGET`, `.firebaserc`, Bit components, env config | `repo` | Partial — `.firebaserc`, `firebase.json`, `functions/` build |
 
 > **Note on tile rendering:** tile refresh logic (`tiles_view`, `_clotho` flag, POI-to-tile trigger chain) is covered as a subsection of suite 6 (Cloud Functions behavior), consistent with its treatment as a backend technical concern in the Jira plan.
 
@@ -127,6 +154,7 @@ Each test case in a suite file follows this structure:
 ### TC-<SUITE>-<NNN> — <Short title>
 
 **Type:** unit | integration | e2e | regression | smoke
+**Scope:** repo | system
 **Jira type:** Tâche | Story | IT
 **Environment:** dev | sandbox | staging | live
 **Priority:** P1 (critical) | P2 (high) | P3 (medium) | P4 (low)
@@ -143,6 +171,10 @@ Each test case in a suite file follows this structure:
 **Expected result:**
 - ...
 ```
+
+**Scope values:**
+- `repo` — the test case can be executed against a single repository in isolation. Use for feature development, per-repo non-regression, and PR gates.
+- `system` — the test case requires the full ecosystem (multiple repos, live Firebase services, or a deployed environment). Use for large environment changes, cross-repo integration passes, and release gates.
 
 > **Execution tracking** (assignee, run date, pass/fail, linked bugs) lives exclusively in Jira.
 > This file defines the test case specification only.
@@ -205,3 +237,4 @@ This table is the authoritative mapping between the specification space (daen-do
 - Execution data (run date, result, assignee, defect links) lives **only** in Jira.
 - Specification data (preconditions, steps, expected result) lives **only** in Jira tickets — suite `.md` files in daen-docs contain scope, audience, and Epic link only.
 - If a Jira ticket has no matching `TC-*` ID in daen-docs, it must be flagged for backfill in the next documentation sprint.
+- Each Jira task must carry one of the labels `scope:repo` or `scope:system` to enable filtered test plan runs. All `daen-fb-workers`-only test cases default to `scope:repo`.
