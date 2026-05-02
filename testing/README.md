@@ -149,9 +149,9 @@ They maintain a **1:1 correspondence with the Jira test plan Epics** — see the
 | 3 | POI Reporting & Feedback | [`suites/poi-reporting.md`](suites/poi-reporting.md) | `TC-REPORT` | `FUNC` | Functional | QA, beta users | `repo` |
 | 4 | POI Lifecycle & Backend | [`suites/poi-lifecycle.md`](suites/poi-lifecycle.md) | `TC-POI` | `FUNC` | Functional | QA, beta users | `repo` |
 | 5 | Notifications & Follow-up | [`suites/notifications.md`](suites/notifications.md) | `TC-NOTIF` | `FUNC` | Functional | QA, beta users | `repo` / `system` |
-| 6 | Authentication & User Access | [`suites/user-auth.md`](suites/user-auth.md) | `TC-AUTH` | `FUNC` | Functional | QA, developers | `repo` |
+| 6 | Authentication & User Sessions | [`suites/user-auth.md`](suites/user-auth.md) | `TC-AUTH` | `FUNC` | Functional | QA, developers | `repo` |
 | 7 | Cloud Functions & Task Orchestration | [`suites/task-orchestration.md`](suites/task-orchestration.md) | `TC-WORKER` | `IT` | IT | Developers, backend QA | `repo` |
-| 8 | Firebase Security & Data Access | [`suites/firebase-security.md`](suites/firebase-security.md) | `TC-FB` | `IT` | IT | Developers | `repo` |
+| 8 | Firebase Security Rules & Access Control | [`suites/firebase-security.md`](suites/firebase-security.md) | `TC-FB` | `IT` | IT | Developers | `repo` |
 | 9 | Data Integrity & Schema Validation | [`suites/data-integrity.md`](suites/data-integrity.md) | `TC-DATA` | `IT` | IT | Developers, backend QA | `repo` |
 | 10 | Realtime Database | [`suites/rtdb.md`](suites/rtdb.md) | `TC-RTDB` | `IT` | IT | Developers | `repo` |
 | 11 | Shared Utilities & Cross-repo Helpers | [`suites/shared-utils.md`](suites/shared-utils.md) | `TC-SHARED` | `IT` | IT | Developers | `dev` |
@@ -247,9 +247,9 @@ This table is the authoritative mapping between the specification space (daen-do
 | `suites/poi-reporting.md` | POI Reporting & Feedback | `TC-REPORT` | `FUNC` | Functional | `beefree` `fb-workers` `firebase` | dev / staging |
 | `suites/poi-lifecycle.md` | POI Lifecycle & Backend | `TC-POI` | `FUNC` | Functional | `fb-workers` `firebase` | dev / sandbox |
 | `suites/notifications.md` | Notifications & Follow-up | `TC-NOTIF` | `FUNC` | Functional | `beefree` `fb-workers` `expo-build` | dev / staging |
-| `suites/user-auth.md` | Authentication & User Access | `TC-AUTH` | `FUNC` | Functional | `beefree` `firebase` | dev / staging |
+| `suites/user-auth.md` | Authentication & User Sessions | `TC-AUTH` | `FUNC` | Functional | `beefree` `firebase` | dev / staging |
 | `suites/task-orchestration.md` | Cloud Functions & Task Orchestration | `TC-WORKER` | `IT` | IT | `fb-workers` `gcp` | dev / sandbox |
-| `suites/firebase-security.md` | Firebase Security & Data Access | `TC-FB` | `IT` | IT | `firebase` `fb-workers` | dev / sandbox |
+| `suites/firebase-security.md` | Firebase Security Rules & Access Control | `TC-FB` | `IT` | IT | `firebase` `fb-workers` | dev / sandbox |
 | `suites/data-integrity.md` | Data Integrity & Schema Validation | `TC-DATA` | `IT` | IT | `firebase` `fb-workers` | dev / staging |
 | `suites/rtdb.md` | Realtime Database | `TC-RTDB` | `IT` | IT | `firebase` `fb-workers` | dev / sandbox |
 | `suites/shared-utils.md` | Shared Utilities & Cross-repo Helpers | `TC-SHARED` | `IT` | IT | `fb-workers` `beefree` | dev |
@@ -298,6 +298,8 @@ Examples:
 |---|---|
 | Environment & Setup | `[SETUP] Environment & Setup` |
 | POI Reporting & Feedback | `[REPORT] POI Reporting & Feedback` |
+| Authentication & User Sessions | `[AUTH] Authentication & User Sessions` |
+| Firebase Security Rules & Access Control | `[FB] Firebase Security Rules & Access Control` |
 | Cloud Functions & Task Orchestration | `[WORKER] Cloud Functions & Task Orchestration` |
 | Shared Utilities & Cross-repo Helpers | `[SHARED] Shared Utilities & Cross-repo Helpers` |
 
