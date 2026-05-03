@@ -17,6 +17,8 @@
 
 # Suite: Environment & Setup
 
+> ⚠️ **STATUS: WORK IN PROGRESS** — Under review, not finalized yet
+> 
 > **Jira plan section:** Environment & setup — prefix `SETUP`
 > **TC ID prefix:** `TC-SETUP`
 > **Jira task type:** Tâche

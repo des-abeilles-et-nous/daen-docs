@@ -1,12 +1,16 @@
 # Test Suite Master Table
 
-> **Status: ✅ TC-SETUP validated from source | 🔶 Others to be validated (2026-05-03)**
-> - **TC-SETUP row:** validated against actual `suites/setup.md` test case components
-> - **All other rows:** inferred from architecture docs and README.md; require validation against actual test cases once suite files are authored
+> **Status: ⚠️ WORK IN PROGRESS — All 11 Suite Files Authored (under review) + Jira Epics Complete**
+> - **TC-SETUP:** ✅ Validated against source — components: firebase, gcp, expo-build, sentry
+> - **TC-BUILD through TC-SHARED:** ✅ All 10 suite files authored with clear **IT vs Functional** distinction
+>   - **IT Suites (🔧):** TC-BUILD, TC-WORKER, TC-FB, TC-DATA, TC-RTDB, TC-SHARED — infrastructure & technical focus
+>   - **Functional Suites (👤):** TC-AUTH, TC-REPORT, TC-POI, TC-NOTIF — user-facing workflows & domain behavior
+> - **Jira alignment:** All 11 suites have corresponding Epics (DATEST-1 through DATEST-11)
+> - **Next work:** Implement test cases in Jira under each Epic; verify component/repo columns against source code once test case implementation reveals actual dependencies
 > - Execution model: manual test case runs + manual campaign tracking in Jira (no automated E2E tooling)
 > - See README.md Section 10 for Jira correspondence rules and implementation checklist
 > 
-> `README.md` is the source of truth — this table is a quick-reference view.
+> `README.md` is the source of truth — this table is a quick-reference view. Jira Epic list: https://desabeillesetnous.atlassian.net/jira/software/c/projects/DATEST/issues
 
 ---
 
@@ -70,4 +74,4 @@
 
 ---
 
-_Last updated: 2026-05-03 — TC-SETUP components validated from source (added `sentry`). Remaining 10 suite files not yet authored; their repo/component columns are inferred and will be validated once test cases are written. Next: author suite files for TC-BUILD through TC-SHARED, then create Epics in Jira DATEST._
+_Last updated: 2026-05-03 — All 11 suite files authored (TC-SETUP through TC-SHARED) with clear IT vs Functional distinction. All 11 Jira Epics created (DATEST-1 through DATEST-11). TC-SETUP components validated from source (firebase, gcp, expo-build, sentry). Remaining suite components are inferred from architecture docs and will be validated once test cases are implemented in Jira and their actual dependencies are revealed. Next: implement test cases in each Epic (1-3 test cases per suite), then create Jira campaigns and validate component/repo mappings against actual source code coverage._
