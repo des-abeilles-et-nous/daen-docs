@@ -39,6 +39,10 @@ daen-docs/
 │   ├── Firebase project configuration
 │   ├── Deployment procedures
 │   └── High-level design diagrams
+├── testing/                       # Test strategy and test suites
+│   ├── README.md
+│   ├── Test Suite Master Table.md
+│   └── suites/
 ├── LICENSE                        # Repository license
 └── README.md                      # Overview
 ```
@@ -300,3 +304,29 @@ For questions about:
 - **"What are the coding standards?"** → daen-docs/dev framework/
 - **"How do I set up environments?"** → daen-docs/environments/
 
+---
+
+## Functional Debt — Pending AI Agent Instructions
+
+### 🔶 [DEBT] Verify Test Suite Master Table — Component & Repo Mapping
+
+**File to update:** [`testing/Test Suite Master Table.md`](testing/Test%20Suite%20Master%20Table.md)
+**Current status:** 🔶 To Be Refined
+
+**Context:**
+The component and repo assignments in the Test Suite Master Table were inferred from architecture documentation only (`ECOSYSTEM_CONTEXT.md`, `CLAUDE.md`). They have **not been verified against actual source code**.
+
+**Instructions for AI agent:**
+1. Inspect source code across the following repositories:
+   - `des-abeilles-et-nous/daen-scout` — mobile frontend (React Native)
+   - `des-abeilles-et-nous/daen-fb-workers` — Cloud Functions / task orchestration
+   - `des-abeilles-et-nous/fb-admin` — admin CLI
+2. For each suite row in the table, verify:
+   - **Primary Repo** — which repo actually owns the code under test
+   - **Components** — which systems/services are exercised (`firebase`, `gcp`, `fb-workers`, `beefree`, `expo-build`)
+   - **Env Scope** — confirm which environments the suite targets
+3. Correct any mismatches found in the table
+4. Replace the 🔶 status with ✅ once all rows are validated
+5. Update `_Last updated` date and remove this debt entry from CLAUDE.md once resolved
+
+**Suites to verify:** TC-SETUP, TC-AUTH, TC-FB, TC-DATA, TC-RTDB, TC-WORKER, TC-SHARED, TC-POI, TC-USER, TC-NOTIF, TC-FEED
