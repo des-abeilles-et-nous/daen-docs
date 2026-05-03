@@ -1,8 +1,11 @@
 # Test Suite Master Table
 
-> **Status: 🔶 Partially Refined**
-> Repos and Jira components columns verified via code inspection and graphify cross-repo analysis (2026-05-03).
-> Env scope and default scope remain inferred from architecture docs — validate against actual Jira configuration before treating as stable.
+> **Status: 🔶 To Be Validated in Jira (2026-05-03)**
+> - Repos and Jira components columns are inferred from architecture docs and graphify — **require validation against actual Jira DATEST configuration before use**
+> - Env scope reflects intended test environments but should be confirmed against the Jira Epics
+> - Execution model: manual test case runs + manual campaign tracking in Jira (no automated E2E tooling)
+> - See README.md Section 10 for Jira correspondence rules and implementation checklist
+> 
 > `README.md` is the source of truth — this table is a quick-reference view.
 
 ---
@@ -21,7 +24,7 @@
 
 ## Suites
 
-| # | Suite Label | TC Prefix | Jira prefix | Orientation | Suite file | Jira Epic title | Audience | Default scope 🔶 | Repos ✅ | Jira components ✅ | Env scope 🔶 |
+| # | Suite Label | TC Prefix | Jira prefix | Orientation | Suite file | Jira Epic title | Audience | Default scope 🔶 | Repos 🔶 | Jira components 🔶 | Env scope 🔶 |
 |---|-------------|-----------|-------------|-------------|------------|-----------------|----------|-------------------|----------|-------------------|-------------|
 | 1 | [SETUP] | `TC-SETUP` | `SETUP` | IT | `suites/setup.md` | Environment & Setup | Developers | system | `daen-scout` `daen-fb-workers` `fb-admin` | `firebase` `gcp` `expo-build` | dev / sandbox / staging |
 | 2 | [BUILD] | `TC-BUILD` | `IT` | IT | `suites/build-deployment.md` | Build, Deployment & Configuration | Developers, release manager | repo | `daen-scout` `daen-fb-workers` | `expo-build` `fb-workers` `gcp` | dev / staging |
@@ -67,4 +70,4 @@
 
 ---
 
-_Last updated: 2026-05-03 — repos column added; AUTH/RTDB components corrected; SHARED default scope fixed (`dev` → `repo`); fb-admin and shared lib repo coverage documented_
+_Last updated: 2026-05-03 — manual E2E and campaign tracking finalized; repo/component/env columns marked for Jira validation. Next: create suite Epics and test cases in Jira DATEST, validate columns against actual project config._

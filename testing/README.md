@@ -97,13 +97,13 @@ All test activities use the four-tier environment system shared by all repositor
 - **Scope:** full user journeys through the mobile app (POI reporting, feedback, alert subscription).
 - **Owner:** QA.
 - **Environment:** `sandbox`.
-- **Tooling:** to be decided (Detox or manual scripted runs).
+- **Tooling:** manual scripted runs. Test case steps are authored in the suite files; testers execute them manually and record results in Jira Subtasks.
 
 ### 4.4 Regression tests
 - **Scope:** defined set of critical paths re-run before each release.
 - **Owner:** QA, executed as a Jira test plan.
 - **Environment:** `staging`.
-- **Reference:** release checklist in [`testing/checklists/release-qa.md`](checklists/release-qa.md) *(to be created)*.
+- **Reference:** selected from the suite files by filtering for critical (`P1`) test cases. Curated as a release campaign in Jira (see Section 11.5).
 
 ### 4.5 Smoke tests
 - **Scope:** minimal set of health checks run after deployment to any environment.
@@ -135,7 +135,8 @@ Every test case within a suite is classified as one of two types. This classific
 | **Functional** | `**Type:** functional` | `Story` | Validates observable user-facing or domain behaviour: submission flows, lifecycle transitions, notification delivery, authentication. Black-box perspective. |
 | **Integration Test (IT)** | `**Type:** integration` | `IT` | Validates technical interactions between components: Firebase rules, Cloud Function triggers, queue mechanics, SDK boundaries. White-box / infrastructure perspective. |
 
-> A suite file must clearly label each test case type. Suite-level orientation (Functional or IT) is indicated in the suite header and in the master table, but does not restrict the types of individual test cases within it.
+> A suite file must clearly label each test case type as `functional` or `integration`. Suite-level orientation (Functional or IT) is indicated in the suite header and in the master table, but does not restrict the types of individual test cases within it.
+> **Note:** the "Type" field in test cases refers to test classification (functional vs. integration), not Jira issue type. The Jira issue type (Story vs. IT) is derived from this classification.
 
 ### 5.3 Suite list
 
@@ -216,11 +217,11 @@ Test priority follows a four-level scale aligned with Jira priority values:
 
 | Risk | Mitigation |
 |---|---|
-| Write contention on Firestore (5 writes/s limit on a document) | Test tile and counter updates with concurrent load; use `sandbox` for stress scenarios |
-| RTDB task queue race conditions | Integration tests with Firebase Emulator to replay concurrent worker dispatch |
+| Write contention on Firestore (5 writes/s limit on a document) | Integration tests validate tile write serialization (see TC-WORKER suite); manual stress scenarios in `sandbox` if contention is suspected |
+| RTDB task queue race conditions | Integration tests with Firebase Emulator to replay concurrent worker dispatch; see TC-WORKER and TC-RTDB suites |
 | Cross-environment data leak | Strict environment isolation enforced by `.firebaserc` project aliasing and service account scoping |
-| Shared Bit component regression | Unit test `daen-objects` and `daen-firebase` before exporting a new version |
-| Mobile client OTA update breaking live users | E2E regression on `staging` mandatory before any OTA push |
+| Shared Bit component regression | Unit tests for `daen-objects` and `daen-firebase` before exporting a new version; TC-SHARED suite covers integration |
+| Mobile client OTA update breaking live users | Manual E2E regression on `staging` before any OTA push (see TC-REPORT, TC-POI, TC-NOTIF, TC-AUTH suites) |
 
 ---
 
@@ -228,9 +229,9 @@ Test priority follows a four-level scale aligned with Jira priority values:
 
 The following are explicitly out of scope for this test strategy:
 
-- Performance / load testing (not yet planned).
-- Security penetration testing (covered by Firebase security rules review, separate process).
-- Accessibility testing for the mobile UI (future initiative).
+- **Automated performance / load testing.** Manual stress scenarios (concurrent tile writes, high feedback volume) are documented in integration test cases but executed ad-hoc, not as part of the standard suite runs.
+- **Security penetration testing.** Covered by Firebase security rules review (separate process outside test strategy).
+- **Accessibility testing for the mobile UI.** Future initiative, not yet planned.
 
 ---
 
@@ -324,17 +325,24 @@ Required fields for every Story / IT:
 
 ### 11.5 Campaign Execution Model
 
-A **campaign** is a scoped, time-bounded test run. It is not a separate issue type — it is implemented by **duplicating** a selection of Story / IT issues from the master Epics and creating **Subtasks** under each duplicate to track individual execution attempts.
+A **campaign** is a scoped, time-bounded test run executed entirely in Jira. It is not a separate issue type — it is implemented by **duplicating** a selection of Story / IT issues from the master Epics and creating **Subtasks** under each duplicate to track individual execution attempts and results.
 
 Campaign lifecycle:
 
-1. **Define scope** — select test cases by filtering on `scope:`, `type:`, component, priority, or environment labels.
-2. **Duplicate issues** — clone the selected Stories / ITs into the campaign sprint or a dedicated campaign Epic. The clone carries the original TC-ID in its summary for traceability.
-3. **Create Subtasks** — for each cloned issue, create one Subtask per execution attempt (one per environment, one per tester, or one per run date as needed). The Subtask carries: assignee, run date, environment, result (Pass / Fail / Blocked), and links to any defect issues.
-4. **Run and record** — testers work through Subtasks, updating status and attaching evidence (logs, screenshots) directly in Jira.
-5. **Close campaign** — when all Subtasks are resolved, the campaign Epic or sprint is closed. The master Story / IT issues in their original Epics are **not** modified.
+1. **Define scope** — select test cases from suite Epics by filtering on `scope:`, `type:`, component, priority, or environment labels. Typical scope: all `P1` (critical path regression), or all `scope:system` (release gate).
+2. **Duplicate issues** — clone the selected Stories / ITs into a dedicated campaign Epic (e.g., `[CAMPAIGN] 2026-05 Release Pre-flight`) or sprint. The clone carries the original TC-ID in its summary for traceability.
+3. **Create Subtasks** — for each cloned issue, create one Subtask per execution environment or tester. Subtask template:
+   - **Summary:** `TC-<ID> — <title> (@<environment>)`
+   - **Assignee:** tester
+   - **Custom field:** Environment (`dev` / `sandbox` / `staging` / `live`)
+   - **Description:** link to daen-docs suite file + TC-ID (reference, do not duplicate steps)
+4. **Run and record** — testers work through Subtasks:
+   - Execute test case steps from the daen-docs suite file
+   - Update Subtask status: `In Progress` → `Done` (Pass), or `Done` + link defect (Fail / Blocked)
+   - Attach evidence (logs, screenshots, notes) directly in Jira
+5. **Close campaign** — when all Subtasks are resolved (Pass/Fail/Blocked), mark the campaign Epic as done. The master Story / IT issues in their original suite Epics are **not** modified.
 
-> The master test case issues (Stories / ITs under suite Epics) must remain untouched between campaigns. They are the specification repository, not the execution tracker.
+> The master test case issues (Stories / ITs under suite Epics) must remain untouched between campaigns. They are the specification repository, not the execution tracker. Only the duplicated issues in the campaign Epic carry execution data.
 
 ### 11.6 Jira Components Reference
 
