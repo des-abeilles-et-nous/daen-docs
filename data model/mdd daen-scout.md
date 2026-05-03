@@ -12,6 +12,8 @@ daen platform Data Model is designed to take the best profit of these two assets
 - **rtbd** is used to handle frequently changing and transitive information linked to platform activities
 - **fs** is dedicated to Business Objects storage
 
+> **Read/write asymmetry in the POI domain.** The Firestore 5 writes/sec/document limit is not just a quota — it is the binding constraint on the worker design. POIs are stored in two collections with deliberately asymmetric roles: `POIs/{poiId}` (write-side, normalised) and `tiled_views/{tileId}` (read-side, denormalised — pre-aggregated tile bundles consumed by the mobile map UI). All POI activity in a geographic area concentrates onto a single `tiled_views` document, so writes must be **serialized per tile**, not raced. See [POI lifecycle: Design rationale](POI%20lifecycle.md#design-rationale-cqrs-style-readwrite-split) for the full tradeoff and [Worker System: The hidden invariant](../backend/Worker%20System.md#the-hidden-invariant-per-tile-write-serialization) for how the worker queue enforces this.
+
 ## Notation
 
 We use a URL like notation to define storage location and the type of stored data at this location.

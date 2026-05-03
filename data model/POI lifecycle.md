@@ -4,6 +4,23 @@ End-to-end flow of a POI from user creation in daen-scout through backend proces
 
 ---
 
+## Design rationale: CQRS-style read/write split
+
+Two Firestore collections back the POI domain, with deliberately asymmetric responsibilities:
+
+| Collection | Role | Document shape | Access pattern |
+|---|---|---|---|
+| `POIs/{poiId}` | **Write side** — canonical business object | One report per document, with full history embedded (`log_roll`, score deltas, status history) | Written on create/update/delete, by Firestore triggers, and by score updates from feedback |
+| `tiled_views/{tileId}` | **Read side** — materialized view for the map | One document per geographic tile, containing the projected list of POIs in that tile (`poi_lists` keyed by category, with viewable attributes only — see `<POIview>` in [mdd daen-scout.md](mdd daen-scout.md)) | Read by every nearby mobile client; written only by Clotho, Lachesis, and Hera |
+
+**Why two collections.** The mobile UI renders a map. A naive design would have each client query `POIs` for the current viewport on every pan/zoom — Firestore reads scale with users × interaction frequency, which is ruinous. Instead, the backend pre-aggregates POIs into per-tile bundles. A client subscribes to the tiles in its viewport (handful of small documents) and receives live updates via Firestore listeners. **Reads collapse from N POIs × M users to ~1 tile read per viewport.**
+
+**The price of read optimization.** Every POI write must propagate into a tile rebuild, and every tile is a single document shared by all activity in its geographic area. Firestore's per-document write quota (~5/sec burst, 1/sec sustained) becomes the binding constraint: in an active area, multiple feedbacks and POI updates landing on the same tile must be **serialized into one write per tile per debounce window**, not raced. The worker system's queueing pattern exists primarily to enforce this invariant (see [Worker System](../backend/Worker System.md), section "The hidden invariant: per-tile write serialization").
+
+**Other Firestore collections in the POI domain.** `POIs_attic` is the permanent archive for expired/disbelieved POIs (write-once, rarely read). `poi_tiles` is a **legacy duplicate of `tiled_views`** kept for backward compatibility with old client versions; every tile update currently writes to both collections, doubling the write surface (tracked as DEBT-005).
+
+---
+
 ## Stage 1 — Creation (daen-scout)
 
 User reports a sighting on the map.

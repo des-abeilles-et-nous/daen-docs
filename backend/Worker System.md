@@ -140,16 +140,31 @@ This section captures a deliberate trade-off analysis of the worker system again
 - **Lachesis batching** — processing all pending feedbacks in one invocation is more cost-efficient than N separate invocations.
 - **30s trigger lag (clotho)** — batches rapid consecutive POI edits into a single tile rebuild, reducing unnecessary Firestore writes.
 
+### The hidden invariant: per-tile write serialization
+
+`tiled_views` is a denormalized materialized view of POIs grouped by geographic tile — each tile document is read by every nearby mobile client and written by Clotho (POI lifecycle), Lachesis (feedback scores), and Hera (tile cleanup). Read-side this is excellent: one tile fetch returns N POIs. Write-side it concentrates all activity for an area onto a single document, where Firestore's per-document write quota (~5/sec burst, 1/sec sustained) becomes the binding constraint.
+
+The polling cycle currently provides per-tile write serialization as a side effect: by running `tasksRunner` once per minute and processing all pending work in one pass, every dirty tile receives at most one write per cycle regardless of how many feedbacks landed on it. **This is the actual function of the queue, not throughput throttling.** Any redesign that moves Lachesis to event-driven dispatch must preserve per-tile coalescing, otherwise active areas will exceed the per-document write rate.
+
+The 30s trigger lag on Clotho is the same pattern at finer grain. Note that **nothing currently serializes Clotho writes against Lachesis writes on the same tile** — that race exists today, but is rare because POI lifecycle changes and feedback bursts seldom coincide on the same tile.
+
+A second cost: Clotho and the `poi-tiles` triggers **dual-write to both `tiled_views` (current) and `poi_tiles` (legacy)** for backward compatibility with old client versions. Every tile update therefore costs two Firestore writes and doubles the contention surface on hot tiles.
+
 ### Known divergences from market standards
 
 | Aspect | Current | Market standard | Tracked |
 |---|---|---|---|
 | Queue backend | RTDB (home-grown) | Cloud Tasks | DEBT-003 |
 | Recurring jobs | Self-scheduling + Zeus watchdog | Cloud Scheduler directly | DEBT-003 |
-| Hermes / Lachesis trigger | Polling on a schedule | `onDocumentCreated` event trigger | DEBT-004 |
+| Hermes trigger | Polling on a schedule | `onDocumentCreated` event trigger | DEBT-004 |
+| Lachesis trigger | Polling on a schedule | Event-driven with per-tile debouncing¹ | DEBT-004 |
+| `tiled_views` writers (Clotho + Lachesis + Hera) | Implicit serialization via cycle | Single tile reconciler with named-task dedup | DEBT-004 |
+| Legacy `poi_tiles` dual-write | Active for old client compat | Retire after client version sunset | DEBT-005 |
 | Throttling | Custom adaptive algorithm | Managed queue rate limits | DEBT-003 |
 | Worker design | Single-responsibility, idempotent | ✓ Matches standard | — |
 | Priority tiers | Buffer / tasks split | ✓ Matches standard | — |
+
+¹ Naive `onValueCreated` would break the per-tile write serialization invariant. See "The hidden invariant" above.
 
 ### Cost profile
 
@@ -157,12 +172,17 @@ This section captures a deliberate trade-off analysis of the worker system again
 
 **The actual cost inefficiency is the polling pattern.** Hermes and Lachesis each pay for a Firestore/RTDB read on every cycle regardless of whether there is work to do. For a sparse-write app like a nature-sighting reporter, this means paying to find nothing most of the time. Event-driven triggers fire only on actual writes — zero cost at idle.
 
-**Where the current system saves money** relative to naive alternatives: the `concurrency: 1` constraint prevents write contention retries; throttling prevents quota exhaustion; batching reduces invocation count. The queue design is sound — the trigger model for polling workers is the weak spot.
+**The legacy `poi_tiles` dual-write doubles cost on every tile update.** Retiring this once the supported client floor allows would halve the write contention on every active tile and is independent of any architectural migration.
+
+**Where the current system saves money** relative to naive alternatives: the `concurrency: 1` constraint prevents write contention retries; the cycle-based dispatch serializes per-tile writes on `tiled_views`; batching reduces invocation count. The queue design is sound — the trigger model for polling workers is the weak spot, but replacing it requires preserving the per-tile serialization invariant, not just changing the trigger mechanism.
 
 ### Remediation priority
 
-1. **DEBT-004 first** (polling → event-driven): self-contained change, highest cost/latency impact, does not require RTDB queue migration.
-2. **DEBT-003 second** (RTDB queue → Cloud Tasks): larger migration, but eliminates Zeus, self-scheduling fragility, and missing dead-letter queue in one move.
+1. **DEBT-005** (retire `poi_tiles` dual-write): cheapest, lowest risk, halves tile-write surface independently of any architectural change. Pre-requisite check: minimum supported client version.
+2. **DEBT-004 (Hermes case)**: self-contained, no contention concerns. Switch to `onDocumentCreated` on `news_roll`. No dependency on DEBT-003.
+3. **DEBT-006** (Lachesis delete-before-update bug): trivial fix, do before any Lachesis refactor.
+4. **DEBT-004 (Lachesis case)**: requires per-tile debouncing. Two paths — either extend `addUniqueWorkerFrom` with per-tile keys (stays in current architecture), or migrate to Cloud Tasks named tasks (couples with DEBT-003). The Cloud Tasks path also opens the door to unifying Clotho + Lachesis into one per-tile reconciler.
+5. **DEBT-003** (RTDB queue → Cloud Tasks): largest migration, but solves Lachesis-tile-reconciler cleanly and eliminates Zeus + self-scheduling fragility.
 
 See `daen-fb-workers/CLAUDE.md` for the full DEBT entries with implementation steps.
 
