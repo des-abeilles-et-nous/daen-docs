@@ -21,10 +21,12 @@ This repository documents the "why" and "how" of the ecosystem, serving both dev
 ```
 daen-docs/
 ├── data model/                    # Business object definitions
-│   ├── POI schema
-│   ├── User model
-│   ├── Subscription definitions
-│   └── Feed and event structures
+│   ├── POI lifecycle.md           # POI write-side / read-side split, full lifecycle
+│   ├── POI lifecycle.drawio       # Visual diagram
+│   ├── User model.md              # User profile, identity, links to POIs/subs
+│   ├── Subscriptions.md           # Standing alert registrations (RTDB /subs)
+│   ├── Feeds.md                   # Tile feed + per-user news_roll, push delivery path
+│   └── mdd daen-scout.md          # Master data document — raw JSON shape sketches
 ├── data pipelines/                # Data flow and ETL documentation
 │   ├── POI creation pipeline
 │   ├── Notification flow
