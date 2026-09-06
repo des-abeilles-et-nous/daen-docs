@@ -164,10 +164,18 @@ bit export
 - `live` - Production release branch
 - `beta` - Beta/testing branch
 - `dev` - Main development branch (protected, default target for PRs)
-- Feature branches: `<type>/DSC-##-<description>` (for daen-scout features)
-  - `<type>/` prefix: `feat/`, `fix/`, `refactor/`, `docs/`, `chore/`, etc.
-  - `DSC-##`: Ticket number from issue tracker
-  - Example: `feat/DSC-123-poi-search-improvements`
+- Working branches: `<type>/<ref>[-<description>]`
+  - `<type>/` prefix in actual use: `feature/`, `bugfix/`, `build/`, `refactor/` (also seen: `docs/`, `chore/` per Conventional Commits types, though less common in branch names)
+    - `feature/` - new functionality
+    - `bugfix/` - bug fixes
+    - `build/` - dependency/SDK/build-chain upgrades (e.g. Expo SDK version bumps, native tooling changes)
+    - `refactor/` - code restructuring without behavior change
+  - `<ref>`: a ticket/issue reference — either `DSC-##` (Jira issue tracker) or `GH#NNN` / `#NNN` (GitHub issue number), depending on where the work is tracked
+  - Examples: `feature/DSC-123-poi-search-improvements`, `bugfix/GH#175`, `build/expo-SDK55`
+  - Ad hoc branches without a `<type>/` prefix (personal branches, quick UI fixes) also occur in practice but aren't a recommended pattern for new work
+
+**Personal branches & merge flow:**
+Developers should do day-to-day work in their own personal branch, named `dev/<name>` (e.g. `dev/dom`), branched off `dev`. Before opening a PR into an official branch (`dev`, `beta`, `live`), merge the personal branch into the appropriate shared working branch (`feature/...`, `bugfix/...`, `build/...`, `refactor/...`) matching the ticket/issue being worked on, and open the PR from that branch. Personal `dev/<name>` branches should not themselves be used as the head branch of a PR into an official branch.
 
 ### Commit Messages
 
